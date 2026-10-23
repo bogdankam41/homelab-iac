@@ -77,6 +77,8 @@ resource "terraform_data" "provision" {
     filesha256("${path.module}/../../ansible/roles/adguard/handlers/main.yml"),
     filesha256("${path.module}/../../ansible/roles/adguard/templates/AdGuardHome.yaml.j2"),
     jsonencode(var.adguard_clients),
+    jsonencode(var.adguard_upstream_dns),
+    jsonencode(var.adguard_fallback_dns),
     var.adguard_password_hash,
     var.adguard_version,
   ]
@@ -104,6 +106,8 @@ resource "terraform_data" "provision" {
         -e '${jsonencode({
     adguard_password_hash = var.adguard_password_hash
     adguard_clients       = var.adguard_clients
+    adguard_upstream_dns  = var.adguard_upstream_dns
+    adguard_fallback_dns  = var.adguard_fallback_dns
     bootstrap_dns         = var.gateway_ip
     adguard_version       = var.adguard_version
 })}' \

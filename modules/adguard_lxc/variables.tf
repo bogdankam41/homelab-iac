@@ -57,6 +57,25 @@ variable "adguard_clients" {
   default = []
 }
 
+variable "adguard_upstream_dns" {
+  type        = list(string)
+  description = "AdGuard Home upstream resolvers. Plain IPs, or DoH/DoT URLs (https://…, tls://…)."
+  default = [
+    "1.1.1.1",
+    "1.0.0.1",
+    "8.8.8.8",
+    "8.8.4.4",
+    "208.67.222.222",
+    "208.67.220.220",
+  ]
+}
+
+variable "adguard_fallback_dns" {
+  type        = list(string)
+  description = "Resolvers AdGuard Home falls back to when every upstream fails."
+  default     = []
+}
+
 variable "os_template" {
   type        = string
   description = "Proxmox template file id for the container OS."

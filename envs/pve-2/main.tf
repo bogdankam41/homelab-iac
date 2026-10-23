@@ -26,4 +26,12 @@ module "adguard_home" {
 
   adguard_password_hash = var.adguard_password_hash
   adguard_clients       = var.adguard_clients
+
+  adguard_upstream_dns = [
+    "https://1.1.1.1/dns-query",
+    "https://1.0.0.1/dns-query",
+    "https://8.8.8.8/dns-query",
+    "https://8.8.4.4/dns-query",
+  ]
+  adguard_fallback_dns = ["77.88.8.8"]
 }
