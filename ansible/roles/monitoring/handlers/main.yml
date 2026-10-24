@@ -29,3 +29,15 @@
     name: grafana-server
     state: restarted
     daemon_reload: yes
+
+- name: reload blackbox_exporter
+  ansible.builtin.systemd:
+    name: blackbox_exporter
+    state: reloaded
+  failed_when: false
+
+- name: restart blackbox_exporter
+  ansible.builtin.systemd:
+    name: blackbox_exporter
+    state: restarted
+    daemon_reload: yes

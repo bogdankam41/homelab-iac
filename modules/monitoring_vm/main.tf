@@ -21,9 +21,12 @@ locals {
   # filled in by the role, so tfvars entries can stay short.
   ansible_extra_vars = merge(
     {
-      monitoring_targets     = var.monitoring_targets
-      monitoring_default_job = var.default_scrape_job
-      monitoring_self_name   = var.vm_name
+      monitoring_targets = var.monitoring_targets
+      monitoring_probes  = var.monitoring_probes
+
+      monitoring_secure_targets = var.monitoring_secure_targets
+      monitoring_default_job    = var.default_scrape_job
+      monitoring_self_name      = var.vm_name
 
       prometheus_version         = var.prometheus_version
       prometheus_retention_time  = var.prometheus_retention_time
@@ -32,6 +35,7 @@ locals {
 
       alertmanager_version            = var.alertmanager_version
       node_exporter_version           = var.node_exporter_version
+      blackbox_exporter_version       = var.blackbox_exporter_version
       monitoring_alerts_enabled       = var.alerts_enabled
       alertmanager_telegram_bot_token = var.telegram_bot_token
       alertmanager_telegram_chat_id   = var.telegram_chat_id

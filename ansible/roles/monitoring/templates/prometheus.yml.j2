@@ -47,3 +47,41 @@ scrape_configs:
       - files:
           - /etc/prometheus/targets/{{ job }}.json
 {% endfor %}
+
+  # Blackbox probes, one job per probe group (monitoring_probes[].job).
+{% for job in monitoring_probes | map(attribute='job') | unique | sort %}
+  - job_name: {{ job }}
+    metrics_path: /probe
+    static_configs:
+{% for p in monitoring_probes | selectattr('job', 'equalto', job) %}
+      - targets: ["{{ p.target }}"]
+        labels:
+          name: "{{ p.name }}"
+          module: "{{ p.module }}"
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [module]
+        target_label: __param_module
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: {{ blackbox_listen_address }}
+{% endfor %}
+
+  # Exporters reachable only over TLS + basic auth. The CA (self-signed cert)
+  # and the password sit in files next to this config, not inline.
+{% for t in monitoring_secure_targets %}
+  - job_name: {{ t.job }}
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/secrets/{{ t.job }}.crt
+    basic_auth:
+      username: {{ t.username }}
+      password_file: /etc/prometheus/secrets/{{ t.job }}.password
+    static_configs:
+      - targets: ["{{ t.address }}"]
+        labels:
+          name: "{{ t.name }}"
+{% endfor %}

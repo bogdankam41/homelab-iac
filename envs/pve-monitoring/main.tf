@@ -30,7 +30,10 @@ module "monitoring" {
 
   # Devices to scrape — the list to edit when something new appears on the LAN.
   monitoring_targets = var.monitoring_targets
-  external_labels    = { site = "home" }
+  # Blackbox probes and TLS-protected exporters outside the LAN.
+  monitoring_probes         = var.monitoring_probes
+  monitoring_secure_targets = var.monitoring_secure_targets
+  external_labels           = { site = "home" }
 
   prometheus_retention_time = var.prometheus_retention_time
 

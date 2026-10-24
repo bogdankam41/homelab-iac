@@ -111,3 +111,28 @@ variable "telegram_chat_id" {
   description = "Telegram chat ID alerts are sent to."
   default     = ""
 }
+
+variable "monitoring_probes" {
+  description = "Blackbox probes (see modules/monitoring_vm). Data lives in terraform.tfvars."
+  type = list(object({
+    name   = string
+    target = string
+    module = string
+    job    = string
+  }))
+  default = []
+}
+
+variable "monitoring_secure_targets" {
+  description = "TLS + basic-auth exporters (see modules/monitoring_vm). Password lives in terraform.tfvars."
+  type = list(object({
+    name     = string
+    address  = string
+    job      = string
+    ca_cert  = string
+    username = string
+    password = string
+  }))
+  default   = []
+  sensitive = true
+}

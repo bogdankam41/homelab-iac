@@ -54,6 +54,10 @@
   ansible.builtin.include_role:
     name: node_exporter
 
+# Before Prometheus, so its probe jobs have something to talk to.
+- name: Install and configure blackbox_exporter
+  ansible.builtin.include_tasks: blackbox.yml
+
 - name: Install and configure Prometheus
   ansible.builtin.include_tasks: prometheus.yml
 

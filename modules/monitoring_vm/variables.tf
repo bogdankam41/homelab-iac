@@ -164,6 +164,44 @@ variable "monitoring_targets" {
   default = []
 }
 
+variable "monitoring_probes" {
+  description = <<-EOT
+    Blackbox probes run from the monitoring VM. Each entry:
+
+      { name = "google", target = "https://www.google.com/generate_204", module = "http_2xx", job = "web" }
+      { name = "nas-ssh", target = "192.168.1.50:22", module = "tcp_connect", job = "lan_tcp" }
+
+    module: http_2xx or tcp_connect. job groups probes into scrape jobs, so
+    alert rules can tell the groups apart.
+  EOT
+
+  type = list(object({
+    name   = string
+    target = string
+    module = string
+    job    = string
+  }))
+  default = []
+}
+
+variable "monitoring_secure_targets" {
+  description = <<-EOT
+    Exporters reachable only over TLS + basic auth (e.g. a host outside the LAN).
+    ca_cert is the PEM of the exporter's self-signed certificate.
+  EOT
+
+  type = list(object({
+    name     = string
+    address  = string
+    job      = string
+    ca_cert  = string
+    username = string
+    password = string
+  }))
+  default   = []
+  sensitive = true
+}
+
 variable "default_scrape_job" {
   type        = string
   description = "Scrape job used by targets that do not name one — plain node_exporter hosts."
@@ -194,6 +232,12 @@ variable "alertmanager_version" {
   type        = string
   description = "Alertmanager release to install (without the leading v)."
   default     = "0.28.1"
+}
+
+variable "blackbox_exporter_version" {
+  type        = string
+  description = "blackbox_exporter release to install (without the leading v)."
+  default     = "0.28.0"
 }
 
 variable "node_exporter_version" {

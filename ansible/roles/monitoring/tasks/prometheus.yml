@@ -91,6 +91,28 @@
   when: (item.path | basename | splitext | first) not in monitoring_jobs
   notify: reload prometheus
 
+# --- Secure targets: CA + password files read by prometheus.yml ----------
+- name: Create the secrets directory
+  ansible.builtin.file:
+    path: /etc/prometheus/secrets
+    state: directory
+    owner: root
+    group: prometheus
+    mode: '0750'
+
+- name: Write CA certificates and passwords of secure targets
+  ansible.builtin.copy:
+    dest: "/etc/prometheus/secrets/{{ item.0.job }}.{{ item.1 }}"
+    content: "{{ item.0.ca_cert if item.1 == 'crt' else item.0.password }}"
+    owner: root
+    group: prometheus
+    mode: '0640'
+  loop: "{{ monitoring_secure_targets | product(['crt', 'password']) | list }}"
+  loop_control:
+    label: "{{ item.0.job }}.{{ item.1 }}"
+  no_log: true
+  notify: reload prometheus
+
 - name: Deploy the alerting rules
   ansible.builtin.template:
     src: alert_rules.yml.j2

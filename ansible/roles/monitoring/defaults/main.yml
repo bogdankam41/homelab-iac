@@ -3,6 +3,7 @@
 # the role replaces a binary only when the version on disk differs.
 prometheus_version: "3.5.0"
 alertmanager_version: "0.28.1"
+blackbox_exporter_version: "0.28.0"
 # Empty = latest package from the Grafana apt repo; or pin e.g. "11.6.1".
 grafana_version: ""
 
@@ -22,6 +23,16 @@ monitoring_default_job: node
 # Scrape the monitoring VM itself as well, under this name.
 monitoring_scrape_self: true
 monitoring_self_name: "{{ inventory_hostname }}"
+
+# --- Probes (blackbox_exporter) -----------------------------------------
+# Each entry: { name, target, module, job }. Modules: http_2xx, tcp_connect.
+# One scrape job per distinct `job`, so alerts can tell paths apart.
+monitoring_probes: []
+blackbox_listen_address: "127.0.0.1:9115"
+
+# --- Targets behind TLS + basic auth (e.g. a host outside the LAN) -------
+# Each entry: { name, address, job, ca_cert (PEM), username, password }.
+monitoring_secure_targets: []
 
 # --- Alerting -----------------------------------------------------------
 monitoring_alerts_enabled: true

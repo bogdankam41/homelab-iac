@@ -1,0 +1,17 @@
+# Managed by Ansible (roles/monitoring) — do not edit by hand.
+modules:
+  # Any 2xx (generate_204 included), following redirects; IPv4 only - the
+  # monitoring VM has no global IPv6.
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+      follow_redirects: true
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
