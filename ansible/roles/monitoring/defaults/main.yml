@@ -40,6 +40,24 @@ monitoring_pve_nodes: []
 pve_exporter_version: "3.10.1"
 pve_exporter_listen_address: "127.0.0.1:9221"
 
+# --- Federation from other Prometheus servers ---------------------------
+# Each entry: { job, address, match (optional list), labels (optional map) }.
+# Pulls a selected set of series from another Prometheus's /federate — e.g. the
+# k3s cluster's kube-prometheus-stack, which keeps only a few days of history.
+monitoring_federation: []
+monitoring_federation_interval: "30s"
+# Series an entry pulls when it names no match[] of its own: exactly what the
+# k3s overview dashboard reads. Raw cadvisor/apiserver histograms stay behind
+# (~130k series) — the dashboard uses kube-prometheus-stack's recording rules.
+monitoring_federation_match:
+  - '{job="kube-state-metrics"}'
+  - '{job="kubelet", __name__=~"kubelet_volume_stats_(used|capacity)_bytes|kubelet_running_pods"}'
+  - '{job="apiserver", __name__="apiserver_request_total"}'
+  - '{__name__=~"namespace_(cpu|memory):kube_pod_container_resource_(requests|limits):sum"}'
+  - '{__name__=~"cluster:namespace:pod_(cpu|memory):active:kube_pod_container_resource_(requests|limits)"}'
+  - '{__name__=~"node_namespace_pod_container:container_(cpu_usage_seconds_total:sum_rate5m|memory_working_set_bytes)"}'
+  - '{__name__="cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile"}'
+
 # --- Targets behind TLS + basic auth (e.g. a host outside the LAN) -------
 # Each entry: { name, address, job, ca_cert (PEM), username, password }.
 monitoring_secure_targets: []

@@ -225,6 +225,26 @@ variable "monitoring_pve_nodes" {
   sensitive = true
 }
 
+variable "monitoring_federation" {
+  description = <<-EOT
+    Other Prometheus servers to pull a selected set of series from (/federate):
+
+      { job = "k3s-federate", address = "192.168.1.30:30090", labels = { cluster = "k3s" } }
+
+    match is an optional list of match[] selectors; without it the role's
+    monitoring_federation_match is used (what the k3s overview dashboard needs).
+    labels are added to every pulled series — keep one that tells the source apart.
+  EOT
+
+  type = list(object({
+    job     = string
+    address = string
+    match   = optional(list(string))
+    labels  = optional(map(string))
+  }))
+  default = []
+}
+
 variable "self_labels" {
   type        = map(string)
   description = "Labels on the monitoring VM's own node_exporter target, like monitoring_targets[].labels."

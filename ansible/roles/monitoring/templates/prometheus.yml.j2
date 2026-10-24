@@ -96,6 +96,29 @@ scrape_configs:
         replacement: {{ pve_exporter_listen_address }}
 {% endif %}
 
+  # Federation: a selected set of series from another Prometheus. honor_labels
+  # keeps the source's job/instance/namespace labels; the entry's labels (e.g.
+  # cluster) are added on top, so the series do not mix with local ones.
+{% for f in monitoring_federation %}
+  - job_name: {{ f.job }}
+    honor_labels: true
+    metrics_path: /federate
+    scrape_interval: {{ monitoring_federation_interval }}
+    params:
+      'match[]':
+{% for m in (f.get('match') or monitoring_federation_match) %}
+        - '{{ m }}'
+{% endfor %}
+    static_configs:
+      - targets: ["{{ f.address }}"]
+{% if f.get('labels') %}
+        labels:
+{% for key, value in f['labels'] | dictsort %}
+          {{ key }}: "{{ value }}"
+{% endfor %}
+{% endif %}
+{% endfor %}
+
   # Exporters reachable only over TLS + basic auth. The CA (self-signed cert)
   # and the password sit in files next to this config, not inline.
 {% for t in monitoring_secure_targets %}

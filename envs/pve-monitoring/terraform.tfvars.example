@@ -88,6 +88,13 @@ grafana_dashboards = [
   # { name = "alertmanager",        gnet_id = 9578, revision = 4 },
 ]
 
+# Federation: the k3s cluster's Prometheus (kube-prometheus-stack, NodePort 30090)
+# keeps ~3 days; this pulls the series the k3s dashboard needs into the local
+# Prometheus (30 days). The match[] set lives in the role (monitoring_federation_match).
+monitoring_federation = [
+  { job = "k3s-federate", address = "192.168.1.30:30090", labels = { cluster = "k3s" } },
+]
+
 # Extra Prometheus datasources. "k3s" is the cluster's own Prometheus
 # (kube-prometheus-stack, NodePort 30090) — the "k3s — обзор" dashboard reads it.
 grafana_extra_datasources = [

@@ -26,6 +26,7 @@ locals {
 
       monitoring_secure_targets = var.monitoring_secure_targets
       monitoring_pve_nodes      = var.monitoring_pve_nodes
+      monitoring_federation     = var.monitoring_federation
       monitoring_default_job    = var.default_scrape_job
       monitoring_self_name      = var.vm_name
       monitoring_self_labels    = var.self_labels

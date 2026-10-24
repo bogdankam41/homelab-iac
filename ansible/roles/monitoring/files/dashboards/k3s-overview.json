@@ -1,7 +1,7 @@
 {
   "uid": "k3s-overview",
   "title": "k3s — обзор",
-  "description": "Кластер k3s на одном экране: ноды, поды, workloads, ресурсы, PVC, API server. Данные — Prometheus из kube-prometheus-stack внутри кластера (datasource k3s).",
+  "description": "Кластер k3s на одном экране: ноды, поды, workloads, ресурсы, PVC, API server. Метрики Kubernetes федерируются из kube-prometheus-stack в основной Prometheus (cluster=\"k3s\", хранение 30 дней); живые алерты читаются из Prometheus кластера (datasource k3s).",
   "tags": [
     "homelab",
     "k3s",
@@ -38,13 +38,13 @@
         "type": "query",
         "datasource": {
           "type": "prometheus",
-          "uid": "k3s"
+          "uid": "${DS_PROMETHEUS}"
         },
         "query": {
-          "query": "label_values(kube_namespace_status_phase, namespace)",
+          "query": "label_values(kube_namespace_status_phase{cluster=\"k3s\"}, namespace)",
           "refId": "ns"
         },
-        "definition": "label_values(kube_namespace_status_phase, namespace)",
+        "definition": "label_values(kube_namespace_status_phase{cluster=\"k3s\"}, namespace)",
         "refresh": 2,
         "sort": 1,
         "includeAll": true,
@@ -68,7 +68,7 @@
       "id": 1,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -81,9 +81,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"})",
+          "expr": "sum(kube_node_status_condition{cluster=\"k3s\", condition=\"Ready\", status=\"true\"})",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -127,7 +127,7 @@
       "id": 2,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -140,9 +140,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(kube_node_status_condition{condition=\"Ready\", status!=\"true\"})",
+          "expr": "sum(kube_node_status_condition{cluster=\"k3s\", condition=\"Ready\", status!=\"true\"})",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -190,7 +190,7 @@
       "id": 3,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -203,9 +203,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(kube_pod_status_phase{phase=\"Running\", namespace=~\"$namespace\"})",
+          "expr": "sum(kube_pod_status_phase{cluster=\"k3s\", phase=\"Running\", namespace=~\"$namespace\"})",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -249,7 +249,7 @@
       "id": 4,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -262,9 +262,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count((sum by (namespace, pod) (kube_pod_status_phase{phase=~\"Pending|Failed|Unknown\", namespace=~\"$namespace\"}) > 0) or (sum by (namespace, pod) (kube_pod_container_status_waiting_reason{reason!=\"ContainerCreating\", namespace=~\"$namespace\"}) > 0)) or vector(0)",
+          "expr": "count((sum by (namespace, pod) (kube_pod_status_phase{cluster=\"k3s\", phase=~\"Pending|Failed|Unknown\", namespace=~\"$namespace\"}) > 0) or (sum by (namespace, pod) (kube_pod_container_status_waiting_reason{cluster=\"k3s\", reason!=\"ContainerCreating\", namespace=~\"$namespace\"}) > 0)) or vector(0)",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -312,7 +312,7 @@
       "id": 5,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -325,9 +325,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(round(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[$__range]))) or vector(0)",
+          "expr": "sum(round(increase(kube_pod_container_status_restarts_total{cluster=\"k3s\", namespace=~\"$namespace\"}[$__range]))) or vector(0)",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -379,7 +379,7 @@
       "id": 6,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
@@ -392,9 +392,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(count(kube_deployment_status_replicas_available{namespace=~\"$namespace\"} < kube_deployment_spec_replicas{namespace=~\"$namespace\"}) or vector(0)) + (count(kube_statefulset_status_replicas_ready{namespace=~\"$namespace\"} < kube_statefulset_replicas{namespace=~\"$namespace\"}) or vector(0)) + (count(kube_daemonset_status_number_ready{namespace=~\"$namespace\"} < kube_daemonset_status_desired_number_scheduled{namespace=~\"$namespace\"}) or vector(0))",
+          "expr": "(count(kube_deployment_status_replicas_available{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_deployment_spec_replicas{cluster=\"k3s\", namespace=~\"$namespace\"}) or vector(0)) + (count(kube_statefulset_status_replicas_ready{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_statefulset_replicas{cluster=\"k3s\", namespace=~\"$namespace\"}) or vector(0)) + (count(kube_daemonset_status_number_ready{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_daemonset_status_desired_number_scheduled{cluster=\"k3s\", namespace=~\"$namespace\"}) or vector(0))",
           "legendFormat": "",
           "instant": true,
           "range": false
@@ -568,7 +568,7 @@
       "id": 9,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 8,
@@ -581,9 +581,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node-exporter\", mode=\"idle\"}[5m])))",
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node\", role=\"k3s\", mode=\"idle\"}[5m])))",
           "legendFormat": "CPU — использовано",
           "instant": true,
           "range": false
@@ -592,9 +592,9 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * sum(namespace_cpu:kube_pod_container_resource_requests:sum) / sum(kube_node_status_allocatable{resource=\"cpu\"})",
+          "expr": "100 * sum(namespace_cpu:kube_pod_container_resource_requests:sum{cluster=\"k3s\"}) / sum(kube_node_status_allocatable{cluster=\"k3s\", resource=\"cpu\"})",
           "legendFormat": "CPU — requests",
           "instant": true,
           "range": false
@@ -603,9 +603,9 @@
           "refId": "C",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (1 - sum(node_memory_MemAvailable_bytes{job=\"node-exporter\"}) / sum(node_memory_MemTotal_bytes{job=\"node-exporter\"}))",
+          "expr": "100 * (1 - sum(node_memory_MemAvailable_bytes{job=\"node\", role=\"k3s\"}) / sum(node_memory_MemTotal_bytes{job=\"node\", role=\"k3s\"}))",
           "legendFormat": "RAM — использовано",
           "instant": true,
           "range": false
@@ -614,9 +614,9 @@
           "refId": "D",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * sum(namespace_memory:kube_pod_container_resource_requests:sum) / sum(kube_node_status_allocatable{resource=\"memory\"})",
+          "expr": "100 * sum(namespace_memory:kube_pod_container_resource_requests:sum{cluster=\"k3s\"}) / sum(kube_node_status_allocatable{cluster=\"k3s\", resource=\"memory\"})",
           "legendFormat": "RAM — requests",
           "instant": true,
           "range": false
@@ -625,9 +625,9 @@
           "refId": "E",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (1 - sum(node_filesystem_avail_bytes{job=\"node-exporter\", mountpoint=\"/\"}) / sum(node_filesystem_size_bytes{job=\"node-exporter\", mountpoint=\"/\"}))",
+          "expr": "100 * (1 - sum(node_filesystem_avail_bytes{job=\"node\", role=\"k3s\", mountpoint=\"/\"}) / sum(node_filesystem_size_bytes{job=\"node\", role=\"k3s\", mountpoint=\"/\"}))",
           "legendFormat": "Диск / (Longhorn)",
           "instant": true,
           "range": false
@@ -689,7 +689,7 @@
     {
       "type": "table",
       "title": "Активные алерты",
-      "description": "Что сейчас в firing у Prometheus внутри кластера (Watchdog и InfoInhibitor скрыты — они горят всегда).",
+      "description": "Что сейчас в firing у Prometheus внутри кластера (Watchdog и InfoInhibitor скрыты — они горят всегда). Читается напрямую из него (datasource k3s): это текущее состояние, история здесь не нужна.",
       "id": 10,
       "datasource": {
         "type": "prometheus",
@@ -734,7 +734,9 @@
               "service": true,
               "uid": true,
               "instance": true,
-              "prometheus": true
+              "prometheus": true,
+              "long": true,
+              "short": true
             },
             "indexByName": {
               "severity": 0,
@@ -815,11 +817,11 @@
     {
       "type": "table",
       "title": "Ноды",
-      "description": "CPU/RAM/диск — фактическая загрузка (node_exporter из kube-prometheus-stack). CPU req / RAM req — доля allocatable, зарезервированная requests подов. Диск / — это и ёмкость Longhorn (/var/lib/longhorn на корневом диске).",
+      "description": "CPU/RAM/диск — фактическая загрузка (node_exporter на нодах). CPU req / RAM req — доля allocatable, зарезервированная requests подов. Диск / — это и ёмкость Longhorn (/var/lib/longhorn на корневом диске).",
       "id": 11,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
@@ -832,9 +834,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max by (node, role) (kube_node_status_condition{condition=\"Ready\", status=\"true\"} * on (node) group_left (role) (max by (node, role) (kube_node_role) or on (node) max by (node, role) (label_replace(kube_node_info, \"role\", \"worker\", \"\", \"\"))))",
+          "expr": "max by (node, role) (kube_node_status_condition{cluster=\"k3s\", condition=\"Ready\", status=\"true\"} * on (node) group_left (role) (max by (node, role) (kube_node_role{cluster=\"k3s\"}) or on (node) max by (node, role) (label_replace(kube_node_info{cluster=\"k3s\"}, \"role\", \"worker\", \"\", \"\"))))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -844,9 +846,9 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (1 - avg by (node) (label_replace(rate(node_cpu_seconds_total{job=\"node-exporter\", mode=\"idle\"}[5m]) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\")))",
+          "expr": "100 * (1 - avg by (node) (label_replace(rate(node_cpu_seconds_total{job=\"node\", role=\"k3s\", mode=\"idle\"}[5m]), \"node\", \"$1\", \"name\", \"(.*)\")))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -856,9 +858,9 @@
           "refId": "C",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * sum by (node) (cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests) / sum by (node) (kube_node_status_allocatable{resource=\"cpu\"})",
+          "expr": "100 * sum by (node) (cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests{cluster=\"k3s\"}) / sum by (node) (kube_node_status_allocatable{cluster=\"k3s\", resource=\"cpu\"})",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -868,9 +870,9 @@
           "refId": "D",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * max by (node) (label_replace((1 - node_memory_MemAvailable_bytes{job=\"node-exporter\"} / node_memory_MemTotal_bytes{job=\"node-exporter\"}) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\"))",
+          "expr": "100 * max by (node) (label_replace((1 - node_memory_MemAvailable_bytes{job=\"node\", role=\"k3s\"} / node_memory_MemTotal_bytes{job=\"node\", role=\"k3s\"}), \"node\", \"$1\", \"name\", \"(.*)\"))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -880,9 +882,9 @@
           "refId": "E",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * sum by (node) (cluster:namespace:pod_memory:active:kube_pod_container_resource_requests) / sum by (node) (kube_node_status_allocatable{resource=\"memory\"})",
+          "expr": "100 * sum by (node) (cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"k3s\"}) / sum by (node) (kube_node_status_allocatable{cluster=\"k3s\", resource=\"memory\"})",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -892,9 +894,9 @@
           "refId": "F",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * max by (node) (label_replace((1 - node_filesystem_avail_bytes{job=\"node-exporter\", mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"node-exporter\", mountpoint=\"/\"}) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\"))",
+          "expr": "100 * max by (node) (label_replace((1 - node_filesystem_avail_bytes{job=\"node\", role=\"k3s\", mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"node\", role=\"k3s\", mountpoint=\"/\"}), \"node\", \"$1\", \"name\", \"(.*)\"))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -904,9 +906,9 @@
           "refId": "G",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max by (node) (kubelet_running_pods{job=\"kubelet\"})",
+          "expr": "max by (node) (kubelet_running_pods{cluster=\"k3s\", job=\"kubelet\"})",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -916,9 +918,9 @@
           "refId": "H",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max by (node) (label_replace((time() - node_boot_time_seconds{job=\"node-exporter\"}) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\"))",
+          "expr": "max by (node) (label_replace((time() - node_boot_time_seconds{job=\"node\", role=\"k3s\"}), \"node\", \"$1\", \"name\", \"(.*)\"))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -1359,7 +1361,7 @@
       "id": 12,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 7,
@@ -1372,9 +1374,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(sum by (namespace, pod, reason) (label_replace(kube_pod_status_phase{phase=~\"Pending|Failed|Unknown\", namespace=~\"$namespace\"} > 0, \"reason\", \"$1\", \"phase\", \"(.*)\")) or sum by (namespace, pod, reason) (kube_pod_container_status_waiting_reason{reason!=\"ContainerCreating\", namespace=~\"$namespace\"} > 0)) * on (namespace, pod) group_left (node) max by (namespace, pod, node) (kube_pod_info)",
+          "expr": "(sum by (namespace, pod, reason) (label_replace(kube_pod_status_phase{cluster=\"k3s\", phase=~\"Pending|Failed|Unknown\", namespace=~\"$namespace\"} > 0, \"reason\", \"$1\", \"phase\", \"(.*)\")) or sum by (namespace, pod, reason) (kube_pod_container_status_waiting_reason{cluster=\"k3s\", reason!=\"ContainerCreating\", namespace=~\"$namespace\"} > 0)) * on (namespace, pod) group_left (node) max by (namespace, pod, node) (kube_pod_info{cluster=\"k3s\"})",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -1459,7 +1461,7 @@
       "id": 13,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 7,
@@ -1472,9 +1474,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max by (namespace, kind, name) (label_replace(label_replace(kube_deployment_status_replicas_available{namespace=~\"$namespace\"} < kube_deployment_spec_replicas{namespace=~\"$namespace\"}, \"kind\", \"Deployment\", \"\", \"\"), \"name\", \"$1\", \"deployment\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_statefulset_status_replicas_ready{namespace=~\"$namespace\"} < kube_statefulset_replicas{namespace=~\"$namespace\"}, \"kind\", \"StatefulSet\", \"\", \"\"), \"name\", \"$1\", \"statefulset\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_daemonset_status_number_ready{namespace=~\"$namespace\"} < kube_daemonset_status_desired_number_scheduled{namespace=~\"$namespace\"}, \"kind\", \"DaemonSet\", \"\", \"\"), \"name\", \"$1\", \"daemonset\", \"(.*)\"))",
+          "expr": "max by (namespace, kind, name) (label_replace(label_replace(kube_deployment_status_replicas_available{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_deployment_spec_replicas{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"Deployment\", \"\", \"\"), \"name\", \"$1\", \"deployment\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_statefulset_status_replicas_ready{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_statefulset_replicas{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"StatefulSet\", \"\", \"\"), \"name\", \"$1\", \"statefulset\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_daemonset_status_number_ready{cluster=\"k3s\", namespace=~\"$namespace\"} < kube_daemonset_status_desired_number_scheduled{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"DaemonSet\", \"\", \"\"), \"name\", \"$1\", \"daemonset\", \"(.*)\"))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -1484,9 +1486,9 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max by (namespace, kind, name) (label_replace(label_replace(kube_deployment_spec_replicas{namespace=~\"$namespace\"} > kube_deployment_status_replicas_available{namespace=~\"$namespace\"}, \"kind\", \"Deployment\", \"\", \"\"), \"name\", \"$1\", \"deployment\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_statefulset_replicas{namespace=~\"$namespace\"} > kube_statefulset_status_replicas_ready{namespace=~\"$namespace\"}, \"kind\", \"StatefulSet\", \"\", \"\"), \"name\", \"$1\", \"statefulset\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_daemonset_status_desired_number_scheduled{namespace=~\"$namespace\"} > kube_daemonset_status_number_ready{namespace=~\"$namespace\"}, \"kind\", \"DaemonSet\", \"\", \"\"), \"name\", \"$1\", \"daemonset\", \"(.*)\"))",
+          "expr": "max by (namespace, kind, name) (label_replace(label_replace(kube_deployment_spec_replicas{cluster=\"k3s\", namespace=~\"$namespace\"} > kube_deployment_status_replicas_available{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"Deployment\", \"\", \"\"), \"name\", \"$1\", \"deployment\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_statefulset_replicas{cluster=\"k3s\", namespace=~\"$namespace\"} > kube_statefulset_status_replicas_ready{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"StatefulSet\", \"\", \"\"), \"name\", \"$1\", \"statefulset\", \"(.*)\")) or max by (namespace, kind, name) (label_replace(label_replace(kube_daemonset_status_desired_number_scheduled{cluster=\"k3s\", namespace=~\"$namespace\"} > kube_daemonset_status_number_ready{cluster=\"k3s\", namespace=~\"$namespace\"}, \"kind\", \"DaemonSet\", \"\", \"\"), \"name\", \"$1\", \"daemonset\", \"(.*)\"))",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -1583,7 +1585,7 @@
       "id": 14,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 8,
@@ -1596,9 +1598,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (1 - avg by (node) (label_replace(rate(node_cpu_seconds_total{job=\"node-exporter\", mode=\"idle\"}[$__rate_interval]) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\")))",
+          "expr": "100 * (1 - avg by (node) (label_replace(rate(node_cpu_seconds_total{job=\"node\", role=\"k3s\", mode=\"idle\"}[$__rate_interval]), \"node\", \"$1\", \"name\", \"(.*)\")))",
           "legendFormat": "{{node}}",
           "instant": false,
           "range": true
@@ -1692,7 +1694,7 @@
       "id": 15,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 8,
@@ -1705,9 +1707,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * max by (node) (label_replace((1 - node_memory_MemAvailable_bytes{job=\"node-exporter\"} / node_memory_MemTotal_bytes{job=\"node-exporter\"}) * on (instance) group_left (nodename) node_uname_info{job=\"node-exporter\"}, \"node\", \"$1\", \"nodename\", \"(.*)\"))",
+          "expr": "100 * max by (node) (label_replace((1 - node_memory_MemAvailable_bytes{job=\"node\", role=\"k3s\"} / node_memory_MemTotal_bytes{job=\"node\", role=\"k3s\"}), \"node\", \"$1\", \"name\", \"(.*)\"))",
           "legendFormat": "{{node}}",
           "instant": false,
           "range": true
@@ -1801,7 +1803,7 @@
       "id": 16,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 12,
@@ -1814,9 +1816,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sort_desc(sum by (namespace) (node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{namespace=~\"$namespace\"}))",
+          "expr": "sort_desc(sum by (namespace) (node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m{cluster=\"k3s\", namespace=~\"$namespace\"}))",
           "legendFormat": "{{namespace}}",
           "instant": true,
           "range": false
@@ -1874,7 +1876,7 @@
       "id": 17,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 12,
@@ -1887,9 +1889,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sort_desc(sum by (namespace) (container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", image!=\"\", namespace=~\"$namespace\"}))",
+          "expr": "sort_desc(sum by (namespace) (node_namespace_pod_container:container_memory_working_set_bytes{cluster=\"k3s\", namespace=~\"$namespace\"}))",
           "legendFormat": "{{namespace}}",
           "instant": true,
           "range": false
@@ -1947,7 +1949,7 @@
       "id": 18,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 8,
@@ -1960,9 +1962,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[$__range]))) > 0",
+          "expr": "round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{cluster=\"k3s\", namespace=~\"$namespace\"}[$__range]))) > 0",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -1972,9 +1974,9 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "topk by (namespace, pod) (1, max by (namespace, pod, reason) (kube_pod_container_status_last_terminated_reason{namespace=~\"$namespace\"})) and on (namespace, pod) (round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[$__range]))) > 0)",
+          "expr": "topk by (namespace, pod) (1, max by (namespace, pod, reason) (kube_pod_container_status_last_terminated_reason{cluster=\"k3s\", namespace=~\"$namespace\"})) and on (namespace, pod) (round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{cluster=\"k3s\", namespace=~\"$namespace\"}[$__range]))) > 0)",
           "legendFormat": "",
           "instant": true,
           "range": false,
@@ -2054,7 +2056,7 @@
       "id": 19,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 8,
@@ -2067,9 +2069,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sort_desc(100 * max by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{job=\"kubelet\", namespace=~\"$namespace\"} / kubelet_volume_stats_capacity_bytes{job=\"kubelet\", namespace=~\"$namespace\"}))",
+          "expr": "sort_desc(100 * max by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{cluster=\"k3s\", job=\"kubelet\", namespace=~\"$namespace\"} / kubelet_volume_stats_capacity_bytes{cluster=\"k3s\", job=\"kubelet\", namespace=~\"$namespace\"}))",
           "legendFormat": "{{namespace}} / {{persistentvolumeclaim}}",
           "instant": true,
           "range": false
@@ -2131,11 +2133,11 @@
     {
       "type": "timeseries",
       "title": "API server — задержка p99",
-      "description": "99-й перцентиль времени ответа kube-apiserver: чтение (GET/LIST) и запись. WATCH не учитывается.",
+      "description": "99-й перцентиль времени ответа kube-apiserver по самому медленному ресурсу (SLI, recording rule kube-prometheus-stack): чтение и запись. WATCH не учитывается.",
       "id": 20,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 7,
@@ -2148,9 +2150,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", verb=~\"GET|LIST\"}[$__rate_interval])))",
+          "expr": "max(cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile{cluster=\"k3s\", quantile=\"0.99\", verb=\"read\"})",
           "legendFormat": "чтение",
           "instant": false,
           "range": true
@@ -2159,9 +2161,9 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(apiserver_request_duration_seconds_bucket{job=\"apiserver\", verb=~\"POST|PUT|PATCH|DELETE\"}[$__rate_interval])))",
+          "expr": "max(cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile{cluster=\"k3s\", quantile=\"0.99\", verb=\"write\"})",
           "legendFormat": "запись",
           "instant": false,
           "range": true
@@ -2239,7 +2241,7 @@
       "id": 21,
       "datasource": {
         "type": "prometheus",
-        "uid": "k3s"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 7,
@@ -2252,9 +2254,9 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "k3s"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "100 * (sum(rate(apiserver_request_total{job=\"apiserver\", code=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(apiserver_request_total{job=\"apiserver\"}[$__rate_interval]))",
+          "expr": "100 * (sum(rate(apiserver_request_total{cluster=\"k3s\", job=\"apiserver\", code=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(apiserver_request_total{cluster=\"k3s\", job=\"apiserver\"}[$__rate_interval]))",
           "legendFormat": "5xx",
           "instant": false,
           "range": true

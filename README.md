@@ -442,7 +442,7 @@ Grafana получает Prometheus-датасорс и папку `Homelab` ч�
 
 Фильтр `Площадка` (метка `site` из `monitoring_targets`) сужает всё сразу. Новый хост с метками `site`/`role` появляется на дашборде сам. Зелёный/оранжевый/красный — только статусы, и всегда рядом с текстом или числом; у роутеров на графиках закреплённые цвета, поэтому фильтр их не перекрашивает. Домашнюю страницу задаёт `grafana_home_dashboard` в роли.
 
-**k3s — обзор** (`files/dashboards/k3s-overview.json`) — кластер k3s на одном экране. Метрики Kubernetes есть только у Prometheus из kube-prometheus-stack внутри кластера, поэтому дашборд читает отдельный датасорс `k3s` (uid `k3s`, задаётся в `grafana_extra_datasources`). Сам Prometheus кластера опубликован на NodePort:
+**k3s — обзор** (`files/dashboards/k3s-overview.json`) — кластер k3s на одном экране. Метрики Kubernetes собирает Prometheus из kube-prometheus-stack внутри кластера, но хранит их всего несколько дней. Поэтому основной Prometheus забирает нужные дашборду серии через federation (`monitoring_federation` в `terraform.tfvars`, job `k3s-federate`) и держит их 30 дней, как всё остальное. Все такие серии получают метку `cluster="k3s"`. Метрики нод (CPU, RAM, диск, uptime) берутся из собственного node_exporter на нодах (job `node`, `role="k3s"`). Сам Prometheus кластера опубликован на NodePort:
 
 ```bash
 helm upgrade kps prometheus-community/kube-prometheus-stack -n monitoring --reuse-values \
@@ -461,7 +461,11 @@ helm upgrade kps prometheus-community/kube-prometheus-stack -n monitoring --reus
 | Рестарты подов, PVC | поды с перезапусками за период и причиной последнего завершения; заполненность томов |
 | API server | p99 задержки чтения/записи и доля ответов 5xx |
 
-Фильтр `Namespace` сужает поды, workloads, namespace-панели и PVC; ноды и алерты показываются всегда. История — сколько хранит Prometheus кластера (`retention: 3d`).
+Фильтр `Namespace` сужает поды, workloads, namespace-панели и PVC; ноды и алерты показываются всегда.
+
+**Что федерируется.** Список `match[]` лежит в роли (`monitoring_federation_match`): всё от kube-state-metrics, статистика PVC и `kubelet_running_pods`, `apiserver_request_total` и recording rules kube-prometheus-stack (requests по namespace и подам, CPU и память контейнеров, квантили задержки API). Это около 11 тысяч серий. Сырые гистограммы apiserver/etcd и cadvisor (около 200 тысяч серий) остаются в кластере: дашборду хватает recording rules. Новой панели нужна другая метрика — добавить её селектор в `monitoring_federation_match`.
+
+Плитки «Критичные»/«Предупр.» и таблица «Активные алерты» читают Prometheus кластера напрямую (датасорс `k3s`, `grafana_extra_datasources`): `ALERTS` не федерируется, иначе алерты кластера попали бы в счётчики Homelab overview. Federation сам под присмотром: если Prometheus кластера недоступен, `up{job="k3s-federate"} == 0` поднимает общий алерт `InstanceDown`.
 
 **Добавить дашборд с grafana.com** (способ «как надо», остаётся в IaC). На странице дашборда — например <https://grafana.com/grafana/dashboards/1860> — берётся его ID и номер ревизии, и добавляется в `grafana_dashboards` в `terraform.tfvars`:
 

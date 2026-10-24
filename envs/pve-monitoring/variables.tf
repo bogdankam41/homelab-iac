@@ -151,6 +151,17 @@ variable "monitoring_pve_nodes" {
   sensitive = true
 }
 
+variable "monitoring_federation" {
+  description = "Prometheus servers to federate a selected set of series from (see modules/monitoring_vm)."
+  type = list(object({
+    job     = string
+    address = string
+    match   = optional(list(string))
+    labels  = optional(map(string))
+  }))
+  default = []
+}
+
 variable "monitoring_secure_targets" {
   description = "TLS + basic-auth exporters (see modules/monitoring_vm). Password lives in terraform.tfvars."
   type = list(object({

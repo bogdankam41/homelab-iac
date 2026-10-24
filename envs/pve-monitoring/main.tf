@@ -35,7 +35,9 @@ module "monitoring" {
   monitoring_secure_targets = var.monitoring_secure_targets
   # Both Proxmox nodes and all their guests, via the Proxmox API.
   monitoring_pve_nodes = var.monitoring_pve_nodes
-  external_labels      = { site = "home" }
+  # Long-term copy of the k3s cluster's metrics (its own Prometheus keeps ~3 days).
+  monitoring_federation = var.monitoring_federation
+  external_labels       = { site = "home" }
   # The VM's own target, labelled like the devices in monitoring_targets.
   self_labels = { role = "monitoring", site = "home" }
 
