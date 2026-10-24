@@ -23,6 +23,8 @@ monitoring_default_job: node
 # Scrape the monitoring VM itself as well, under this name.
 monitoring_scrape_self: true
 monitoring_self_name: "{{ inventory_hostname }}"
+# Extra labels for that self target, like monitoring_targets[].labels.
+monitoring_self_labels: {}
 
 # --- Probes (blackbox_exporter) -----------------------------------------
 # Each entry: { name, target, module, job }. Modules: http_2xx, tcp_connect.

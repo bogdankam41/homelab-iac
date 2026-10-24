@@ -1,0 +1,34 @@
+---
+# node_exporter on a Keenetic router, from the Entware package. KeeneticOS has
+# no Python, so the role only uses raw commands.
+
+# LAN address to listen on — never the WAN. Defaults to the address Ansible
+# connects to, which for a router is its LAN IP. Read through hostvars: a bare
+# ansible_host turns into localhost in the delegated endpoint check.
+keenetic_node_exporter_listen_address: "{{ hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname) }}:9100"
+
+# Only collectors that make sense on a router and work on its 4.9 kernel
+# (no hwmon there — the SoC temperature comes from thermal_zone).
+keenetic_node_exporter_collectors:
+  - cpu
+  - loadavg
+  - meminfo
+  - pressure
+  - stat
+  - time
+  - uname
+  - netdev
+  - netclass
+  - conntrack
+  - filesystem
+  - diskstats
+  - thermal_zone
+
+# Placeholder and tunnel interfaces KeeneticOS creates on every router.
+keenetic_node_exporter_netdev_exclude: "^(lo|tunl0|ip6tnl0|sit0|gre0|gretap0|ethoip0|dummy0|ezcfg0)$"
+# The USB disk is mounted twice, at /opt and at /tmp/mnt/<uuid>: keep /opt only,
+# or every disk alert fires twice.
+keenetic_node_exporter_mount_exclude: "^/(dev|proc|sys|tmp/mnt)($|/)"
+
+# More flags. The init script expands them unquoted: no spaces, no * ? [ ].
+keenetic_node_exporter_extra_args: []

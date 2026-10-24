@@ -1,0 +1,10 @@
+---
+# node_exporter on Keenetic routers with Entware (aarch64 package from the
+# Entware feed). KeeneticOS has no Python: raw commands only, no fact gathering.
+# Run by hand against the router's LAN IP, then add it to monitoring_targets:
+#   ansible-playbook -i '192.168.1.1,' -u root --private-key ~/.ssh/private-key-ed25519 ansible/keenetic_node_exporter.yml
+- name: Install node_exporter on Keenetic routers
+  hosts: all
+  gather_facts: false
+  roles:
+    - keenetic_node_exporter

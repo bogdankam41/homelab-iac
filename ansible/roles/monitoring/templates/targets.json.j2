@@ -2,7 +2,7 @@
    Optional fields arrive as null from Terraform, hence the .get(...) or ... defaults. #}
 {%- set entries = [] -%}
 {%- if monitoring_scrape_self | bool and job_name == monitoring_default_job -%}
-{%-   set _ = entries.append({'targets': ['localhost:9100'], 'labels': {'name': monitoring_self_name}}) -%}
+{%-   set _ = entries.append({'targets': ['localhost:9100'], 'labels': {'name': monitoring_self_name} | combine(monitoring_self_labels or {})}) -%}
 {%- endif -%}
 {%- for t in monitoring_targets -%}
 {%-   if (t.get('job') or monitoring_default_job) == job_name -%}

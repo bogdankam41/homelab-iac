@@ -28,6 +28,7 @@ locals {
       monitoring_pve_nodes      = var.monitoring_pve_nodes
       monitoring_default_job    = var.default_scrape_job
       monitoring_self_name      = var.vm_name
+      monitoring_self_labels    = var.self_labels
 
       prometheus_version         = var.prometheus_version
       prometheus_retention_time  = var.prometheus_retention_time

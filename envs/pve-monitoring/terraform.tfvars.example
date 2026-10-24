@@ -29,39 +29,28 @@ prometheus_retention_time = "30d"
 #     -b ../../ansible/node_exporter.yml
 # ---------------------------------------------------------------------------
 monitoring_targets = [
-  {
-    name    = "pve"
-    address = "192.168.1.10:9100"
-    labels  = { role = "hypervisor" }
-  },
+  # labels: role groups devices by kind, site by location (home / pve-2) —
+  # the overview dashboard and alerts use both.
+  { name = "pve", address = "192.168.1.10:9100", labels = { role = "hypervisor", site = "home" } },
   # The second node is scraped across the IPSec tunnel — no exporter port has to
   # be exposed to the internet, the tunnel already carries the LAN.
-  {
-    name    = "pve-2"
-    address = "192.168.2.10:9100"
-    labels  = { role = "hypervisor" }
-  },
-  {
-    name    = "k3s-master"
-    address = "192.168.1.30:9100"
-    labels  = { role = "k3s" }
-  },
-  {
-    name    = "k3s-worker-1"
-    address = "192.168.1.31:9100"
-    labels  = { role = "k3s" }
-  },
-  {
-    name    = "k3s-worker-2"
-    address = "192.168.1.32:9100"
-    labels  = { role = "k3s" }
-  },
+  { name = "pve-2", address = "192.168.2.10:9100", labels = { role = "hypervisor", site = "pve-2" } },
+
+  { name = "k3s-master", address = "192.168.1.30:9100", labels = { role = "k3s", site = "home" } },
+  { name = "k3s-worker-1", address = "192.168.1.31:9100", labels = { role = "k3s", site = "home" } },
+  { name = "k3s-worker-2", address = "192.168.1.32:9100", labels = { role = "k3s", site = "home" } },
+
+  # AdGuard LXCs and other guests: ansible/node_exporter.yml, as for any host.
+  { name = "adguard-home", address = "192.168.1.2:9100", labels = { role = "dns", site = "home" } },
+  { name = "adguard-pve-2", address = "192.168.2.2:9100", labels = { role = "dns", site = "pve-2" } },
+
+  # Keenetic routers (Entware): ansible/keenetic_node_exporter.yml. The exporter
+  # listens on the LAN IP only.
+  { name = "router-home", address = "192.168.1.1:9100", labels = { role = "router", site = "home" } },
+  { name = "router-pve2", address = "192.168.2.1:9100", labels = { role = "router", site = "pve-2" } },
+
   # A device with its own exporter goes into its own job:
-  # {
-  #   name    = "adguard"
-  #   address = "192.168.1.2:9617"
-  #   job     = "adguard"
-  # },
+  # { name = "adguard", address = "192.168.1.2:9617", job = "adguard" },
 ]
 
 # ---------------------------------------------------------------------------

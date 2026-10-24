@@ -1,0 +1,53 @@
+---
+- name: Install prometheus-node-exporter and nohup from Entware
+  ansible.builtin.raw: |
+    want="prometheus-node-exporter coreutils-nohup"
+    missing=""
+    for p in $want; do opkg list-installed | grep -q "^$p " || missing="$missing $p"; done
+    [ -z "$missing" ] && exit 0
+    opkg update >/dev/null && opkg install $missing >/dev/null && echo changed
+  register: keenetic_ne_pkg
+  changed_when: "'changed' in keenetic_ne_pkg.stdout"
+
+# The rendered script goes through a temp file, so a router whose script is
+# already right is left alone.
+- name: Install the init script
+  ansible.builtin.raw: |
+    f=/opt/etc/init.d/S99node_exporter
+    cat > $f.new <<'EOF'
+    {{ lookup('ansible.builtin.template', 'S99node_exporter.j2') }}
+    EOF
+    if cmp -s $f.new $f; then rm $f.new; else mv $f.new $f; chmod 755 $f; echo changed; fi
+  register: keenetic_ne_init
+  changed_when: "'changed' in keenetic_ne_init.stdout"
+
+# stdin/stdout detached as well, so the SSH session can close cleanly. The echo
+# is not decoration: when the redirected restart is the session's last command,
+# the session closes before the script does anything (rc 255, nothing restarted).
+- name: Restart node_exporter
+  when: keenetic_ne_pkg is changed or keenetic_ne_init is changed
+  ansible.builtin.raw: /opt/etc/init.d/S99node_exporter restart </dev/null >/dev/null 2>&1; echo restarted
+  changed_when: true
+
+- name: Start node_exporter if it is not running
+  ansible.builtin.raw: pidof node_exporter >/dev/null || { /opt/etc/init.d/S99node_exporter start </dev/null >/dev/null 2>&1; echo changed; }
+  register: keenetic_ne_start
+  changed_when: "'changed' in keenetic_ne_start.stdout"
+
+- name: Check node_exporter listens on the LAN address only
+  ansible.builtin.raw: netstat -tln | grep ':9100 '
+  register: keenetic_ne_listen
+  changed_when: false
+  failed_when: >-
+    (keenetic_node_exporter_listen_address ~ ' ') not in keenetic_ne_listen.stdout
+    or '0.0.0.0:9100' in keenetic_ne_listen.stdout
+    or ':::9100' in keenetic_ne_listen.stdout
+
+- name: Check the metrics endpoint answers
+  delegate_to: localhost
+  ansible.builtin.uri:
+    url: "http://{{ keenetic_node_exporter_listen_address }}/metrics"
+  register: keenetic_ne_metrics
+  until: keenetic_ne_metrics is succeeded
+  retries: 5
+  delay: 2

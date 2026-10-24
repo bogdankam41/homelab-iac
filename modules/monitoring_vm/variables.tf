@@ -225,6 +225,12 @@ variable "monitoring_pve_nodes" {
   sensitive = true
 }
 
+variable "self_labels" {
+  type        = map(string)
+  description = "Labels on the monitoring VM's own node_exporter target, like monitoring_targets[].labels."
+  default     = { role = "monitoring" }
+}
+
 variable "default_scrape_job" {
   type        = string
   description = "Scrape job used by targets that do not name one — plain node_exporter hosts."

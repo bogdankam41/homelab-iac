@@ -1,0 +1,15 @@
+#!/bin/sh
+# Managed by Ansible (roles/keenetic_node_exporter) — do not edit by hand.
+# Replaces the Entware package's script, which starts node_exporter with no
+# flags, i.e. on every interface including the WAN. `opkg upgrade` brings that
+# one back: re-run ansible/keenetic_node_exporter.yml after upgrading.
+
+ENABLED=yes
+PROCS=node_exporter
+ARGS='--web.listen-address={{ keenetic_node_exporter_listen_address }} --collector.disable-defaults{% for c in keenetic_node_exporter_collectors %} --collector.{{ c }}{% endfor %} --collector.netdev.device-exclude={{ keenetic_node_exporter_netdev_exclude }} --collector.netclass.ignored-devices={{ keenetic_node_exporter_netdev_exclude }} --collector.filesystem.mount-points-exclude={{ keenetic_node_exporter_mount_exclude }}{{ ([''] + keenetic_node_exporter_extra_args) | join(' ') }}'
+# Started from an SSH session, the exporter would die with it — nohup keeps it.
+PREARGS=nohup
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func

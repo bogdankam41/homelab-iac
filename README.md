@@ -84,6 +84,8 @@ proxmox/
 │   │   └── files/dashboards/      # свои дашборды Grafana (температура)
 │   ├── node_exporter.yml          # поставить экспортер на любое устройство
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
+│   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
+│   ├── roles/keenetic_node_exporter/  # пакет Entware + свой init-скрипт, только raw
 │   └── inventory/                 # (gitignored) inventory генерирует Terraform
 ├── modules/
 │   ├── adguard_lxc/               # ЕДИНЫЙ модуль: LXC-контейнер + запуск Ansible
@@ -324,6 +326,22 @@ kubectl get nodes -o wide
 Проверить результат: `http://192.168.1.40:9090/targets` — все цели должны быть `UP`. Цель в состоянии `DOWN` обычно значит, что на устройстве не поднят экспортер (шаг 1) или порт закрыт файрволом.
 
 Устройства одного job лежат в отдельном файле `/etc/prometheus/targets/<job>.json` (file_sd), поэтому добавление устройства в существующий job Prometheus подхватывает сам, даже без перезагрузки конфига. Новый `job` добавляет scrape-конфиг в `prometheus.yml` → роль шлёт Prometheus SIGHUP (reload, без простоя).
+
+### 📡 Роутеры Keenetic
+
+На роутерах с Entware (USB-накопитель) `node_exporter` ставится пакетом из фида Entware — бинарь под aarch64 там уже собран. Python на KeeneticOS нет, поэтому роль [`keenetic_node_exporter`](ansible/roles/keenetic_node_exporter) работает только через `raw`:
+
+```bash
+ansible-playbook -i '192.168.1.1,' -u root \
+  --private-key ~/.ssh/private-key-ed25519 ansible/keenetic_node_exporter.yml
+```
+
+- Скрипт из пакета (`S99node_exporter`) запускает экспортер без флагов, то есть **на всех интерфейсах, включая WAN**. Роль заменяет его своим: `--web.listen-address=<LAN-IP>:9100`, и проверяет, что на `0.0.0.0:9100` никто не слушает. `opkg upgrade` возвращает скрипт из пакета — после обновления плейбук нужно прогнать ещё раз.
+- Включены только коллекторы, которые имеют смысл на роутере: CPU, память, PSI, трафик интерфейсов и их состояние (`netclass`), conntrack, USB-диск, температура SoC (`thermal_zone` — `hwmon` у Keenetic нет).
+- USB-диск смонтирован дважды (`/opt` и `/tmp/mnt/<uuid>`), `/tmp/mnt` исключён — иначе каждый алерт по диску приходил бы дважды.
+- Экспортер запускается через `nohup`: стартовавший из SSH-сессии процесс иначе умирает вместе с ней.
+
+Роутер без USB (Entware ставить некуда) так не снять — для него остаётся SNMP или ping-проба.
 
 ### 🔔 Алерты
 
