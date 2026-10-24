@@ -20,7 +20,7 @@
     repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
     filename: grafana
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Install Grafana
   ansible.builtin.apt:
@@ -30,10 +30,10 @@
   until: grafana_pkg is succeeded
   retries: 5
   delay: 10
-  notify: restart grafana
+  notify: Restart grafana
 
 - name: Configure grafana.ini
-  ansible.builtin.ini_file:
+  community.general.ini_file:
     path: /etc/grafana/grafana.ini
     section: "{{ item.section }}"
     option: "{{ item.option }}"
@@ -41,7 +41,7 @@
     owner: root
     group: grafana
     mode: '0640'
-    no_extra_spaces: yes
+    no_extra_spaces: true
   loop:
     - { section: server, option: http_port, value: "{{ grafana_listen_port }}" }
     - { section: security, option: admin_user, value: "{{ grafana_admin_user }}" }
@@ -52,8 +52,8 @@
     - { section: analytics, option: check_for_updates, value: "false" }
   loop_control:
     label: "{{ item.section }}.{{ item.option }}"
-  no_log: yes
-  notify: restart grafana
+  no_log: true
+  notify: Restart grafana
 
 - name: Create the Grafana provisioning directories
   ansible.builtin.file:
@@ -81,7 +81,7 @@
     owner: root
     group: grafana
     mode: '0640'
-  notify: restart grafana
+  notify: Restart grafana
 
 - name: Provision the dashboard folder
   ansible.builtin.template:
@@ -90,7 +90,7 @@
     owner: root
     group: grafana
     mode: '0640'
-  notify: restart grafana
+  notify: Restart grafana
 
 # Dashboards come from grafana.com; add or drop them via grafana_dashboards.
 - name: Download the provisioned dashboards
@@ -118,7 +118,7 @@
   loop: "{{ grafana_dashboards }}"
   loop_control:
     label: "{{ item.name }}"
-  notify: restart grafana
+  notify: Restart grafana
 
 # Dashboards that live in this repo (roles/monitoring/files/dashboards). Used for
 # boards grafana.com does not have — e.g. the hwmon temperature one.
@@ -133,7 +133,7 @@
     - dashboards/*.json
   loop_control:
     label: "{{ item | basename }}"
-  notify: restart grafana
+  notify: Restart grafana
 
 - name: Bind the repo's dashboards to the Prometheus datasource
   ansible.builtin.replace:
@@ -144,11 +144,11 @@
     - dashboards/*.json
   loop_control:
     label: "{{ item | basename }}"
-  notify: restart grafana
+  notify: Restart grafana
 
 - name: Ensure Grafana is started and enabled
   ansible.builtin.systemd:
     name: grafana-server
     state: started
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true

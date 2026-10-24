@@ -1,0 +1,17 @@
+---
+# ansible-lint settings (run by .github/workflows/lint.yml).
+# No profile: every rule except the opt-in ones applies.
+
+# Collections are installed by CI from ansible/requirements.yml.
+offline: true
+
+exclude_paths:
+  - .github/
+  - envs/
+  - modules/
+
+skip_list:
+  # Role variables are the interface Terraform fills through extra vars
+  # (prometheus_version, grafana_admin_password, k3s_channel, ...). Prefixing
+  # them with the role name would rename every variable on both sides.
+  - var-naming[no-role-prefix]

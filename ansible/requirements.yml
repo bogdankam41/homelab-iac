@@ -1,0 +1,5 @@
+---
+# Collections the roles use besides ansible.builtin.
+collections:
+  - name: community.general # ini_file (roles/monitoring)
+    version: ">=10.0.0"

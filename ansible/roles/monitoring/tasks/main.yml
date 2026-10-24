@@ -30,7 +30,7 @@
       - apt-transport-https
       - qemu-guest-agent
     state: present
-    update_cache: yes
+    update_cache: true
   register: apt_base
   until: apt_base is succeeded
   retries: 5
@@ -46,7 +46,7 @@
 - name: Enable qemu-guest-agent
   ansible.builtin.systemd:
     name: qemu-guest-agent
-    enabled: yes
+    enabled: true
     state: "{{ 'started' if qga_channel.stat.exists else omit }}"
 
 # Included (not a meta dependency) so it runs after the network fixes above.

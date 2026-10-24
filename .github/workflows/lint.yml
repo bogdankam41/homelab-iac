@@ -1,0 +1,70 @@
+name: lint
+
+# Static checks only: nothing here talks to Proxmox or needs a secret.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  opentofu:
+    name: OpenTofu (fmt, validate, tflint)
+    runs-on: ubuntu-latest
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.tofu-plugin-cache
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: 1.8.2
+          tofu_wrapper: false
+
+      - name: tofu fmt
+        run: tofu fmt -check -recursive -diff
+
+      # Envs commit their lock file, so init must not change it; modules have none.
+      - name: tofu validate
+        run: |
+          mkdir -p "$TF_PLUGIN_CACHE_DIR"
+          for dir in envs/*/ modules/*/; do
+            echo "::group::$dir"
+            lockfile=$([[ $dir == envs/* ]] && echo readonly || echo update)
+            tofu -chdir="$dir" init -backend=false -input=false -lockfile="$lockfile"
+            tofu -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.64.0
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+  ansible:
+    name: Ansible (ansible-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible-lint and collections
+        run: |
+          pip install ansible-lint==26.9.0
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: ansible-lint
+        run: ansible-lint

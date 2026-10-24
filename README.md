@@ -1,5 +1,7 @@
 # 🛡️ Proxmox Homelab IaC
 
+[![lint](https://github.com/bogdankam41/homelab-iac/actions/workflows/lint.yml/badge.svg)](https://github.com/bogdankam41/homelab-iac/actions/workflows/lint.yml)
+
 Terraform + Ansible для домашней инфраструктуры на Proxmox:
 
 - **AdGuard Home** в LXC-контейнере на **двух** нодах (`envs/pve`, `envs/pve-2`); на `pve-2` контейнер вторым интерфейсом смотрит ещё и в гостевую сеть;
@@ -175,9 +177,26 @@ api_token = "${var.proxmox_user}=${var.proxmox_password}"
 1. Для шифрования секретов в репозитории рассмотреть **SOPS + age**.
 2. `terraform.tfstate` и `*.tfvars` уже в `.gitignore`; `.terraform.lock.hcl` намеренно коммитится (фиксирует версию провайдера).
 
+## ✅ Проверки (CI)
+
+Workflow [`lint`](.github/workflows/lint.yml) запускается на каждый PR и на push в `main`. Он только статический: к Proxmox не ходит и секретов не требует.
+
+| Джоба | Что проверяет |
+| ----- | ------------- |
+| OpenTofu | `tofu fmt -check -recursive`; `tofu init -backend=false` + `tofu validate` в каждом `envs/*` и `modules/*` (в envs — с `-lockfile=readonly`, так что устаревший lock-файл валит CI); `tflint --recursive` с пресетом `recommended` ([`.tflint.hcl`](.tflint.hcl)) |
+| Ansible | `ansible-lint` по всем плейбукам и ролям — все правила, кроме opt-in ([`.ansible-lint`](.ansible-lint)); коллекции ставятся из [`ansible/requirements.yml`](ansible/requirements.yml) |
+
+Экшены закреплены по commit SHA, токен у workflow только на чтение. Локально то же самое:
+
+```bash
+tofu fmt -check -recursive
+tflint --init && tflint --recursive
+ansible-galaxy collection install -r ansible/requirements.yml && ansible-lint
+```
+
 ## 📝 Заметки
 
-- Провайдер `bpg/proxmox` закреплён на `0.66.1`. Для обновления: `terraform init -upgrade` и проверить план.
+- Провайдер `bpg/proxmox` закреплён на `0.66.1`. Для обновления: `tofu init -upgrade` в окружении, затем `tofu providers lock -platform=linux_amd64 -platform=darwin_arm64` (иначе в lock-файле останутся хэши только для платформы, на которой делали init, и CI на Linux упадёт) и проверить план.
 - Публичный SSH-ключ задаётся дефолтом в `variables.tf` (`ssh_public_keys`) — при необходимости переопределяется в `terraform.tfvars`.
 - `insecure = true` — из-за самоподписанного сертификата Proxmox в LAN.
 

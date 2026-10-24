@@ -33,7 +33,7 @@
       - curl
       - tar
     state: present
-    update_cache: yes
+    update_cache: true
   register: apt_deps
   until: apt_deps is succeeded
   retries: 5
@@ -58,19 +58,19 @@
       ansible.builtin.unarchive:
         src: "https://github.com/AdguardTeam/AdGuardHome/releases/download/{{ adguard_version }}/AdGuardHome_linux_amd64.tar.gz"
         dest: /opt/
-        remote_src: yes
+        remote_src: true
       register: agh_download
       until: agh_download is succeeded
       retries: 5
       delay: 10
-      notify: restart adguard
+      notify: Restart adguard
 
 - name: Deploy AdGuard configuration from template
   ansible.builtin.template:
     src: AdGuardHome.yaml.j2
     dest: /opt/AdGuardHome/AdGuardHome.yaml
     mode: '0644'
-  notify: restart adguard
+  notify: Restart adguard
 
 - name: Install AdGuard Home as a service
   ansible.builtin.command:
@@ -79,6 +79,9 @@
     creates: /etc/systemd/system/AdGuardHome.service
 
 - name: Configure systemd-resolved to release port 53
+  notify:
+    - Restart resolved
+    - Restart adguard
   block:
     - name: Create resolved.conf.d directory
       ansible.builtin.file:
@@ -102,16 +105,12 @@
       args:
         creates: /run/systemd/resolve/resolv.conf
 
-  notify: 
-    - restart resolved
-    - restart adguard
-
 - name: Ensure services are started and enabled
   ansible.builtin.systemd:
     name: "{{ item }}"
     state: started
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true
   loop:
     - systemd-resolved
     - AdGuardHome

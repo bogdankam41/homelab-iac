@@ -26,7 +26,7 @@
     - name: Run the k3s installer in server mode
       ansible.builtin.command: /usr/local/bin/k3s-install.sh
       environment: "{{ k3s_install_env | combine({'INSTALL_K3S_EXEC': k3s_server_exec}) }}"
-      changed_when: yes
+      changed_when: true
 
     - name: Record the install signature
       ansible.builtin.copy:
@@ -38,7 +38,7 @@
   ansible.builtin.systemd:
     name: k3s
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Wait for the Kubernetes API to become ready
   ansible.builtin.command: k3s kubectl get --raw=/readyz
@@ -57,7 +57,7 @@
 - name: Expose the join token to the agent play
   ansible.builtin.set_fact:
     k3s_node_token: "{{ k3s_node_token_raw.content | b64decode | trim }}"
-  no_log: yes
+  no_log: true
 
 - name: Fetch the kubeconfig to the machine running Ansible
   when: kubeconfig_local_path | default('') | length > 0
@@ -73,7 +73,7 @@
         state: directory
         mode: '0700'
       delegate_to: localhost
-      become: no
+      become: false
 
     # Point the kubeconfig at the master's LAN IP instead of 127.0.0.1 and give
     # the cluster/user/context a name that will not collide with other clusters.
@@ -89,5 +89,5 @@
         dest: "{{ kubeconfig_local_path | expanduser }}"
         mode: '0600'
       delegate_to: localhost
-      become: no
-      no_log: yes
+      become: false
+      no_log: true

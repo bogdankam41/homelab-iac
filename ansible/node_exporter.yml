@@ -4,6 +4,6 @@
 #   ansible-playbook -i '192.168.1.50,' -u ubuntu --private-key ~/.ssh/key -b ansible/node_exporter.yml
 - name: Install node_exporter on monitored hosts
   hosts: all
-  become: yes
+  become: true
   roles:
     - node_exporter

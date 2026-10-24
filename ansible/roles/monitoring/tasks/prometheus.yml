@@ -2,9 +2,9 @@
 - name: Create the prometheus system user
   ansible.builtin.user:
     name: prometheus
-    system: yes
+    system: true
     shell: /usr/sbin/nologin
-    create_home: no
+    create_home: false
 
 - name: Create the Prometheus directories
   ansible.builtin.file:
@@ -32,7 +32,7 @@
       ansible.builtin.unarchive:
         src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
         dest: /opt/
-        remote_src: yes
+        remote_src: true
       register: prometheus_download
       until: prometheus_download is succeeded
       retries: 5
@@ -42,14 +42,14 @@
       ansible.builtin.copy:
         src: "/opt/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
         dest: "/usr/local/bin/{{ item }}"
-        remote_src: yes
+        remote_src: true
         owner: root
         group: root
         mode: '0755'
       loop:
         - prometheus
         - promtool
-      notify: restart prometheus
+      notify: Restart prometheus
 
 # --- Devices to scrape ---------------------------------------------------
 # monitoring_targets comes straight from terraform.tfvars. Terraform sends the
@@ -89,7 +89,7 @@
   loop_control:
     label: "{{ item.path }}"
   when: (item.path | basename | splitext | first) not in monitoring_jobs
-  notify: reload prometheus
+  notify: Reload prometheus
 
 # --- Secure targets: CA + password files read by prometheus.yml ----------
 - name: Create the secrets directory
@@ -111,7 +111,7 @@
   loop_control:
     label: "{{ item.0.job }}.{{ item.1 }}"
   no_log: true
-  notify: reload prometheus
+  notify: Reload prometheus
 
 - name: Deploy the alerting rules
   ansible.builtin.template:
@@ -121,7 +121,7 @@
     group: prometheus
     mode: '0644'
     validate: /usr/local/bin/promtool check rules %s
-  notify: reload prometheus
+  notify: Reload prometheus
 
 - name: Deploy prometheus.yml
   ansible.builtin.template:
@@ -131,18 +131,18 @@
     group: prometheus
     mode: '0644'
     validate: /usr/local/bin/promtool check config %s
-  notify: reload prometheus
+  notify: Reload prometheus
 
 - name: Install the Prometheus systemd unit
   ansible.builtin.template:
     src: prometheus.service.j2
     dest: /etc/systemd/system/prometheus.service
     mode: '0644'
-  notify: restart prometheus
+  notify: Restart prometheus
 
 - name: Ensure Prometheus is started and enabled
   ansible.builtin.systemd:
     name: prometheus
     state: started
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true

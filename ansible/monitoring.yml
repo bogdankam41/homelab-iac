@@ -3,6 +3,6 @@
 # Terraform passes the device list and versions in as extra vars.
 - name: Deploy the monitoring stack (Prometheus + Alertmanager + Grafana)
   hosts: all
-  become: yes
+  become: true
   roles:
     - monitoring

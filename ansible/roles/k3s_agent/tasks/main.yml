@@ -25,12 +25,14 @@
   block:
     - name: Run the k3s installer in agent mode
       ansible.builtin.command: /usr/local/bin/k3s-install.sh
-      environment: "{{ k3s_install_env | combine({
-        'INSTALL_K3S_EXEC': k3s_agent_exec,
-        'K3S_URL': k3s_server_url,
-        'K3S_TOKEN': hostvars[k3s_master_host].k3s_node_token }) }}"
-      changed_when: yes
-      no_log: yes
+      environment: "{{ k3s_install_env | combine(k3s_agent_env) }}"
+      vars:
+        k3s_agent_env:
+          INSTALL_K3S_EXEC: "{{ k3s_agent_exec }}"
+          K3S_URL: "{{ k3s_server_url }}"
+          K3S_TOKEN: "{{ hostvars[k3s_master_host].k3s_node_token }}"
+      changed_when: true
+      no_log: true
 
     - name: Record the install signature
       ansible.builtin.copy:
@@ -42,4 +44,4 @@
   ansible.builtin.systemd:
     name: k3s-agent
     state: started
-    enabled: yes
+    enabled: true

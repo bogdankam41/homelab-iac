@@ -1,11 +1,11 @@
 ---
-- name: restart adguard
+- name: Restart adguard
   ansible.builtin.systemd:
     name: AdGuardHome
     state: restarted
-    daemon_reload: yes
+    daemon_reload: true
 
-- name: restart resolved
+- name: Restart resolved
   ansible.builtin.systemd:
     name: systemd-resolved
     state: restarted
