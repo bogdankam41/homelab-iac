@@ -48,6 +48,8 @@ locals {
       grafana_admin_user     = var.grafana_admin_user
       grafana_admin_password = var.grafana_admin_password
       grafana_dashboards     = var.grafana_dashboards
+
+      grafana_extra_datasources = var.grafana_extra_datasources
     },
     var.alert_thresholds,
   )

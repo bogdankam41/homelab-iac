@@ -81,7 +81,7 @@ proxmox/
 │   ├── roles/k3s_agent/           # воркеры (join по токену мастера)
 │   ├── monitoring.yml             # плейбук стека мониторинга
 │   ├── roles/monitoring/          # Prometheus + Alertmanager + Grafana
-│   │   └── files/dashboards/      # свои дашборды Grafana (обзор, температура)
+│   │   └── files/dashboards/      # свои дашборды Grafana (обзор, k3s, температура)
 │   ├── node_exporter.yml          # поставить экспортер на любое устройство
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
 │   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
@@ -441,6 +441,27 @@ Grafana получает Prometheus-датасорс и папку `Homelab` ч�
 | WAN | входящий и исходящий трафик роутеров — двумя графиками, без второй оси |
 
 Фильтр `Площадка` (метка `site` из `monitoring_targets`) сужает всё сразу. Новый хост с метками `site`/`role` появляется на дашборде сам. Зелёный/оранжевый/красный — только статусы, и всегда рядом с текстом или числом; у роутеров на графиках закреплённые цвета, поэтому фильтр их не перекрашивает. Домашнюю страницу задаёт `grafana_home_dashboard` в роли.
+
+**k3s — обзор** (`files/dashboards/k3s-overview.json`) — кластер k3s на одном экране. Метрики Kubernetes есть только у Prometheus из kube-prometheus-stack внутри кластера, поэтому дашборд читает отдельный датасорс `k3s` (uid `k3s`, задаётся в `grafana_extra_datasources`). Сам Prometheus кластера опубликован на NodePort:
+
+```bash
+helm upgrade kps prometheus-community/kube-prometheus-stack -n monitoring --reuse-values \
+  --set prometheus.service.type=NodePort --set prometheus.service.nodePort=30090
+```
+
+| Блок | Что показывает |
+| --- | --- |
+| Плитки | ноды Ready / не Ready, поды Running, проблемные поды, рестарты за период, workloads без нужного числа реплик, критичные алерты и предупреждения |
+| Ресурсы кластера | CPU и RAM — фактическая загрузка и доля, зарезервированная requests; корневой диск (он же ёмкость Longhorn) |
+| Активные алерты | firing-алерты kube-prometheus-stack (без Watchdog/InfoInhibitor) |
+| Ноды | роль, Ready, CPU / CPU req, RAM / RAM req, диск `/`, число подов, uptime |
+| Проблемные поды, workloads не в норме | что именно сломано: под с причиной (Pending, CrashLoopBackOff…) и нодой; Deployment/StatefulSet/DaemonSet с готово/нужно |
+| CPU и RAM по нодам | графики по трём нодам, у каждой свой закреплённый цвет |
+| CPU и RAM по namespace | кто сколько потребляет сейчас, по убыванию |
+| Рестарты подов, PVC | поды с перезапусками за период и причиной последнего завершения; заполненность томов |
+| API server | p99 задержки чтения/записи и доля ответов 5xx |
+
+Фильтр `Namespace` сужает поды, workloads, namespace-панели и PVC; ноды и алерты показываются всегда. История — сколько хранит Prometheus кластера (`retention: 3d`).
 
 **Добавить дашборд с grafana.com** (способ «как надо», остаётся в IaC). На странице дашборда — например <https://grafana.com/grafana/dashboards/1860> — берётся его ID и номер ревизии, и добавляется в `grafana_dashboards` в `terraform.tfvars`:
 

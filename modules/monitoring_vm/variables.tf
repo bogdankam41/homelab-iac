@@ -359,3 +359,13 @@ variable "grafana_dashboards" {
     },
   ]
 }
+
+variable "grafana_extra_datasources" {
+  description = "Additional Prometheus datasources in Grafana, e.g. the k3s cluster's own Prometheus (uid \"k3s\" is what the k3s overview dashboard uses)."
+  type = list(object({
+    name = string
+    uid  = string
+    url  = string
+  }))
+  default = []
+}

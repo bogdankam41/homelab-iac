@@ -88,6 +88,12 @@ grafana_dashboards = [
   # { name = "alertmanager",        gnet_id = 9578, revision = 4 },
 ]
 
+# Extra Prometheus datasources. "k3s" is the cluster's own Prometheus
+# (kube-prometheus-stack, NodePort 30090) — the "k3s — обзор" dashboard reads it.
+grafana_extra_datasources = [
+  { name = "k3s", uid = "k3s", url = "http://192.168.1.30:30090" },
+]
+
 # Alerting. Leave the Telegram fields empty to keep alerts in the UI only.
 alerts_enabled     = true
 telegram_bot_token = ""

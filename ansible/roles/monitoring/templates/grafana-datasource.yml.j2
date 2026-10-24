@@ -11,3 +11,13 @@ datasources:
     editable: false
     jsonData:
       timeInterval: {{ prometheus_scrape_interval }}
+{% for ds in grafana_extra_datasources %}
+
+  - name: {{ ds.name }}
+    uid: {{ ds.uid }}
+    type: prometheus
+    access: proxy
+    url: {{ ds.url }}
+    isDefault: false
+    editable: false
+{% endfor %}

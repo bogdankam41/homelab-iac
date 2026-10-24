@@ -72,6 +72,9 @@ grafana_listen_port: 3000
 grafana_admin_user: admin
 grafana_admin_password: admin
 grafana_datasource_uid: prometheus
+# Extra Prometheus datasources next to the local one. Each entry: { name, uid, url }.
+# The k3s overview dashboard expects uid "k3s" (the cluster's own Prometheus).
+grafana_extra_datasources: []
 # Dashboard file (in /var/lib/grafana/dashboards) shown as Grafana's home page.
 grafana_home_dashboard: homelab-overview.json
 # Dashboards pulled from grafana.com and provisioned on disk.

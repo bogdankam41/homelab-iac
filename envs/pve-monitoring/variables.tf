@@ -87,6 +87,21 @@ variable "grafana_dashboards" {
   ]
 }
 
+variable "grafana_extra_datasources" {
+  description = <<-EOT
+    Additional Prometheus datasources in Grafana. The k3s overview dashboard reads
+    uid "k3s" — the Prometheus of kube-prometheus-stack inside the cluster,
+    published on a NodePort (prometheus.service.type=NodePort, nodePort 30090).
+  EOT
+
+  type = list(object({
+    name = string
+    uid  = string
+    url  = string
+  }))
+  default = []
+}
+
 variable "alerts_enabled" {
   type        = bool
   description = "Evaluate the built-in alerting rules (instance down, CPU, memory, disk)."

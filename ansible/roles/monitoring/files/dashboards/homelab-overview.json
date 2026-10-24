@@ -32,6 +32,12 @@
       "type": "link",
       "url": "/d/homelab-temperature",
       "keepTime": true
+    },
+    {
+      "title": "k3s",
+      "type": "link",
+      "url": "/d/k3s-overview",
+      "keepTime": true
     }
   ],
   "templating": {

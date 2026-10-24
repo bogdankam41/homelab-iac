@@ -44,6 +44,8 @@ module "monitoring" {
   grafana_admin_user     = var.grafana_admin_user
   grafana_admin_password = var.grafana_admin_password
   grafana_dashboards     = var.grafana_dashboards
+  # The k3s cluster's own Prometheus (kube-prometheus-stack), for the k3s dashboard.
+  grafana_extra_datasources = var.grafana_extra_datasources
 
   alerts_enabled     = var.alerts_enabled
   alert_thresholds   = var.alert_thresholds
