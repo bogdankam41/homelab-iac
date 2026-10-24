@@ -8,3 +8,10 @@ node_exporter_user: node_exporter
 # Extra flags, e.g. the systemd collector for one service:
 #   ["--collector.systemd", "--collector.systemd.unit-include=nginx[.]service"]
 node_exporter_extra_args: []
+# An LXC container sees the node's /sys/class/hwmon and thermal zones, so it
+# would report the node's temperatures as its own (and HighTemperature would
+# fire once per container). These collectors are off inside containers.
+node_exporter_container_args:
+  - --no-collector.hwmon
+  - --no-collector.thermal_zone
+node_exporter_in_container: "{{ ansible_facts.get('virtualization_type') == 'lxc' and ansible_facts.get('virtualization_role') == 'guest' }}"

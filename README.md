@@ -419,9 +419,11 @@ ssh root@192.168.1.10 'for d in /sys/class/hwmon/hwmon*; do echo "$d: $(cat $d/n
 
 `pve-2` скрейпится **через IPSec-туннель** (`192.168.2.10:9100`, RTT ~3 мс) — наружу порт экспортера открывать не надо, туннель уже несёт LAN второй площадки.
 
-**Дашборд:** «Homelab — температура» (`ansible/roles/monitoring/files/dashboards/homelab-temperature.json`) — максимум по хостам, CPU, диски, все сенсоры, вентиляторы; фильтры по хосту и чипу. Список хостов строится из самих метрик (`label_values(node_hwmon_temp_celsius, name)`), поэтому новая нода с датчиками появляется на дашборде сама, править JSON не нужно. Температура есть и в Node Exporter Full — свёрнутая строка *Hardware Misc*.
+**Дашборд:** «Homelab — температура» (`ansible/roles/monitoring/files/dashboards/homelab-temperature.json`) — только физические устройства: максимум по хостам, CPU, диски, все сенсоры, вентиляторы; фильтры по хосту и чипу. У роутеров Keenetic `hwmon` нет — их SoC берётся из `thermal_zone` (в плитке максимума и на графике CPU). Список хостов — те, кто отдаёт температуру прямо сейчас (`query_result`, а не `label_values`, который ещё пару часов помнит пропавшие серии), поэтому новое железо появляется само, а убранное — сразу исчезает. Температура есть и в Node Exporter Full — свёрнутая строка *Hardware Misc*.
 
-**Алерт:** `HighTemperature` — выше `alert_temp_threshold` (85 °C) дольше `alert_temp_for` (5 мин). Правило смотрит только на чипы из `alert_temp_chips` (CPU и диски): ACPI-зоны, батарея и часть датчиков платы на многих машинах врут (у `dell_smm` один сенсор стабильно показывает 0 °C), поэтому в правило они не входят — на дашборде видны все.
+**LXC-контейнеры температуру не отдают.** Контейнер видит `/sys/class/hwmon` и thermal zones своей ноды, и без этого каждый LXC показывал бы температуру ноды как свою, а `HighTemperature` срабатывал бы по разу на контейнер. Роль `node_exporter` по фактам Ansible (`virtualization_type: lxc`, `virtualization_role: guest`) добавляет внутри контейнера `--no-collector.hwmon --no-collector.thermal_zone` (список — `node_exporter_container_args`). VM датчиков не видят и так.
+
+**Алерт:** `HighTemperature` — выше `alert_temp_threshold` (85 °C) дольше `alert_temp_for` (5 мин). Правило смотрит только на чипы из `alert_temp_chips` (CPU и диски): ACPI-зоны, батарея и часть датчиков платы на многих машинах врут (у `dell_smm` один сенсор стабильно показывает 0 °C), поэтому в правило они не входят — на дашборде видны все. Устройства без `hwmon` (роутеры) попадают в правило по SoC из `thermal_zone`; `type`/`zone` переименовываются в `chip`/`sensor`, так что текст алерта тот же.
 
 ### 📊 Дашборды
 

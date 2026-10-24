@@ -14,8 +14,10 @@
         "label": "Хост",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "query": "label_values(node_hwmon_temp_celsius, name)",
-        "refresh": 1,
+        "description": "Устройства, которые отдают температуру сейчас. Не label_values: тот видит и недавно пропавшие серии, а All разворачивается в этот список.",
+        "query": "query_result(max by (name) ({__name__=~\"node_hwmon_temp_celsius|node_thermal_zone_temp\"}))",
+        "regex": "/name=\"([^\"]+)\"/",
+        "refresh": 2,
         "includeAll": true,
         "multi": true,
         "current": { "text": "All", "value": "$__all" }
@@ -38,14 +40,14 @@
       "id": 1,
       "type": "stat",
       "title": "Максимальная температура по хостам",
-      "description": "Самый горячий сенсор каждого хоста. Жёлтый — от 70 °C, красный — от 85 °C.",
+      "description": "Самый горячий сенсор каждого физического устройства. У роутеров hwmon нет — у них температура SoC из thermal_zone. Жёлтый — от 70 °C, красный — от 85 °C.",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "max by (name) (node_hwmon_temp_celsius{name=~\"$host\", chip=~\"$chip\"})",
+          "expr": "max by (name) (node_hwmon_temp_celsius{name=~\"$host\", chip=~\"$chip\"}) or max by (name) (node_thermal_zone_temp{name=~\"$host\"} unless on (instance) node_hwmon_temp_celsius)",
           "legendFormat": "{{name}}"
         }
       ],
@@ -76,7 +78,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "CPU",
-      "description": "coretemp (Intel) / k10temp (AMD) / cpu_thermal (ARM). temp1 у coretemp — это Package id 0, температура всего пакета.",
+      "description": "coretemp (Intel) / k10temp (AMD) / cpu_thermal (ARM). temp1 у coretemp — это Package id 0, температура всего пакета. Роутеры — SoC из thermal_zone (mtktscpu / cpu-thermal).",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 5 },
       "targets": [
@@ -85,6 +87,12 @@
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "node_hwmon_temp_celsius{name=~\"$host\", chip=~\".*coretemp.*|.*k10temp.*|.*cpu_thermal.*\"}",
           "legendFormat": "{{name}} {{sensor}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "node_thermal_zone_temp{name=~\"$host\"} unless on (instance) node_hwmon_temp_celsius",
+          "legendFormat": "{{name}} {{type}}"
         }
       ],
       "options": {

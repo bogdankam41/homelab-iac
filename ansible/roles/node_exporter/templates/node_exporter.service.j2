@@ -8,7 +8,7 @@ Wants=network-online.target
 Type=simple
 User={{ node_exporter_user }}
 Group={{ node_exporter_user }}
-ExecStart=/usr/local/bin/node_exporter --web.listen-address={{ node_exporter_listen_address }}{{ ([''] + node_exporter_extra_args) | join(' ') }}
+ExecStart=/usr/local/bin/node_exporter --web.listen-address={{ node_exporter_listen_address }}{{ ([''] + node_exporter_extra_args + (node_exporter_container_args if node_exporter_in_container | bool else [])) | join(' ') }}
 Restart=on-failure
 RestartSec=5s
 NoNewPrivileges=yes

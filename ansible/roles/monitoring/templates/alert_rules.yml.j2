@@ -52,8 +52,16 @@ groups:
     rules:
       # hwmon exposes every chip the kernel knows about; alert_temp_chips keeps
       # the rule on CPU and disk sensors only (see roles/monitoring/defaults).
+      # Devices without hwmon (Keenetic routers) only have the SoC thermal zone;
+      # its type/zone are relabelled to chip/sensor so the annotation reads the same.
       - alert: HighTemperature
-        expr: max by (instance, name, job, chip, sensor) (node_hwmon_temp_celsius{chip=~"{{ alert_temp_chips }}"}) > {{ alert_temp_threshold }}
+        expr: |
+          (
+            max by (instance, name, job, chip, sensor) (node_hwmon_temp_celsius{chip=~"{{ alert_temp_chips }}"})
+            or max by (instance, name, job, chip, sensor) (
+              label_replace(label_replace(node_thermal_zone_temp unless on (instance) node_hwmon_temp_celsius,
+                "chip", "$1", "type", "(.+)"), "sensor", "zone$1", "zone", "(.+)"))
+          ) > {{ alert_temp_threshold }}
         for: {{ alert_temp_for }}
         labels:
           severity: warning
