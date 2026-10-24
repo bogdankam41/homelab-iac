@@ -81,7 +81,7 @@ proxmox/
 │   ├── roles/k3s_agent/           # воркеры (join по токену мастера)
 │   ├── monitoring.yml             # плейбук стека мониторинга
 │   ├── roles/monitoring/          # Prometheus + Alertmanager + Grafana
-│   │   └── files/dashboards/      # свои дашборды Grafana (температура)
+│   │   └── files/dashboards/      # свои дашборды Grafana (обзор, температура)
 │   ├── node_exporter.yml          # поставить экспортер на любое устройство
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
 │   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
@@ -426,6 +426,19 @@ ssh root@192.168.1.10 'for d in /sys/class/hwmon/hwmon*; do echo "$d: $(cat $d/n
 ### 📊 Дашборды
 
 Grafana получает Prometheus-датасорс и папку `Homelab` через provisioning — руками ничего подключать не надо.
+
+**Homelab — обзор** (`files/dashboards/homelab-overview.json`) — домашняя страница Grafana, вся инфраструктура на одном экране:
+
+| Блок | Что показывает |
+| --- | --- |
+| Плитки | площадки в сети / недоступны, сколько хостов отвечает и сколько нет, остановленные гости с автозапуском, упавшие blackbox-пробы, критичные алерты и предупреждения |
+| Активные алерты | что сейчас в firing, с хостом и точкой монтирования |
+| Хосты | всё с node_exporter: статус, uptime, CPU, RAM, самый заполненный диск, t° CPU/SoC (только у гипервизоров и роутеров — LXC видят датчики хоста); клик по имени — Node Exporter Full по этому хосту |
+| Гости Proxmox | все VM/CT обеих нод из pve_exporter: статус, автозапуск, CPU, RAM, uptime; клик — дашборд Proxmox ноды |
+| Хранилища Proxmox | заполненность пулов, включая thin-pool `local-lvm` |
+| WAN | входящий и исходящий трафик роутеров — двумя графиками, без второй оси |
+
+Фильтр `Площадка` (метка `site` из `monitoring_targets`) сужает всё сразу. Новый хост с метками `site`/`role` появляется на дашборде сам. Зелёный/оранжевый/красный — только статусы, и всегда рядом с текстом или числом; у роутеров на графиках закреплённые цвета, поэтому фильтр их не перекрашивает. Домашнюю страницу задаёт `grafana_home_dashboard` в роли.
 
 **Добавить дашборд с grafana.com** (способ «как надо», остаётся в IaC). На странице дашборда — например <https://grafana.com/grafana/dashboards/1860> — берётся его ID и номер ревизии, и добавляется в `grafana_dashboards` в `terraform.tfvars`:
 

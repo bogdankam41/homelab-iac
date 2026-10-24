@@ -72,6 +72,8 @@ grafana_listen_port: 3000
 grafana_admin_user: admin
 grafana_admin_password: admin
 grafana_datasource_uid: prometheus
+# Dashboard file (in /var/lib/grafana/dashboards) shown as Grafana's home page.
+grafana_home_dashboard: homelab-overview.json
 # Dashboards pulled from grafana.com and provisioned on disk.
 grafana_dashboards:
   - name: node-exporter-full

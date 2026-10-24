@@ -50,6 +50,8 @@
     - { section: "auth.anonymous", option: enabled, value: "false" }
     - { section: analytics, option: reporting_enabled, value: "false" }
     - { section: analytics, option: check_for_updates, value: "false" }
+    # The overview opens instead of Grafana's welcome page.
+    - { section: dashboards, option: default_home_dashboard_path, value: "/var/lib/grafana/dashboards/{{ grafana_home_dashboard }}" }
   loop_control:
     label: "{{ item.section }}.{{ item.option }}"
   no_log: true
