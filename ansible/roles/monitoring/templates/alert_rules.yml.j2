@@ -13,7 +13,7 @@ groups:
         labels:
           severity: critical
         annotations:{% raw %}
-          summary: '{{ $labels.name }} is down'
+          summary: '{{ or $labels.name $labels.instance }} is down'
           description: 'Prometheus cannot scrape {{ $labels.instance }} (job {{ $labels.job }}).'{% endraw %}
 
   - name: homelab.resources
@@ -61,4 +61,34 @@ groups:
         annotations:{% raw %}
           summary: 'High temperature on {{ $labels.name }}'
           description: '{{ $labels.chip }}/{{ $labels.sensor }} is {{ printf "%.0f" $value }}°C on {{ $labels.instance }}.'{% endraw %}
+{% if monitoring_pve_nodes %}
+
+  # pve_exporter (job pve). instance = Proxmox node, name = guest name.
+  - name: homelab.proxmox
+    rules:
+      # Only guests that start on boot: a VM stopped on purpose is not an incident.
+      - alert: GuestDown
+        expr: |
+          ((pve_up{id=~"(qemu|lxc)/.+"} == 0) and on (instance, id) (pve_onboot_status == 1))
+            * on (instance, id) group_left (name, type) pve_guest_info
+        for: {{ alert_instance_down_for }}
+        labels:
+          severity: critical
+        annotations:{% raw %}
+          summary: '{{ $labels.name }} is stopped on {{ $labels.instance }}'
+          description: 'Proxmox reports {{ $labels.type }} {{ $labels.id }} not running, although it is set to start on boot.'{% endraw %}
+
+      # Storage pools (local-lvm thin pool included), which node_exporter's
+      # filesystem metrics do not see.
+      - alert: PveStorageFull
+        expr: pve_disk_usage_bytes{id=~"storage/.+"} / pve_disk_size_bytes{id=~"storage/.+"} * 100 > {{ alert_disk_threshold }}
+        for: {{ alert_disk_for }}
+        labels:
+          severity: warning
+          threshold: "{{ alert_disk_threshold }}"
+        annotations:{% raw %}
+          summary: 'Storage {{ $labels.id }} is filling up'
+          description: '{{ $labels.id }} is {{ printf "%.0f" $value }}% full on {{ $labels.instance }}.'{% endraw %}
+
+{% endif %}
 {% endif %}

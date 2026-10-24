@@ -1,0 +1,11 @@
+# Managed by Ansible (roles/monitoring) — do not edit by hand.
+# One module per Proxmox node; Prometheus picks it with ?module=<name>.
+# Each node is a separate Proxmox instance with its own read-only token.
+# verify_ssl is off: the nodes serve Proxmox's self-signed certificate.
+{% for n in monitoring_pve_nodes %}
+{{ n.name }}:
+  user: "{{ n.token_id.split('!') | first }}"
+  token_name: "{{ n.token_id.split('!') | last }}"
+  token_value: "{{ n.token_secret }}"
+  verify_ssl: false
+{% endfor %}

@@ -41,3 +41,10 @@
     name: blackbox_exporter
     state: restarted
     daemon_reload: true
+
+# pve_exporter reads pve.yml only at start.
+- name: Restart pve_exporter
+  ansible.builtin.systemd:
+    name: pve_exporter
+    state: restarted
+    daemon_reload: true

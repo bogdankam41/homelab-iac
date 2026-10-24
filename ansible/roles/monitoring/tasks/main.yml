@@ -54,9 +54,21 @@
   ansible.builtin.include_role:
     name: node_exporter
 
+# Shared by Prometheus and the exporters next to it, so it exists before any of them.
+- name: Create the prometheus system user
+  ansible.builtin.user:
+    name: prometheus
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
 # Before Prometheus, so its probe jobs have something to talk to.
 - name: Install and configure blackbox_exporter
   ansible.builtin.include_tasks: blackbox.yml
+
+- name: Install and configure pve_exporter
+  ansible.builtin.include_tasks: pve_exporter.yml
+  when: monitoring_pve_nodes | length > 0
 
 - name: Install and configure Prometheus
   ansible.builtin.include_tasks: prometheus.yml

@@ -64,10 +64,37 @@ monitoring_targets = [
   # },
 ]
 
+# ---------------------------------------------------------------------------
+# Proxmox nodes, scraped through pve_exporter: the node plus every VM/CT on it
+# (status, CPU, RAM, disk, network) without an agent in the guests. The nodes
+# are not clustered, so each gets its own read-only token. On every node:
+#
+#   pveum user add prometheus@pve --comment "pve_exporter (read-only)"
+#   pveum acl modify / --users prometheus@pve --roles PVEAuditor
+#   pveum user token add prometheus@pve monitoring --privsep 0
+#
+# The last command prints the secret — it goes into token_secret.
+# ---------------------------------------------------------------------------
+monitoring_pve_nodes = [
+  {
+    name         = "pve"
+    address      = "192.168.1.10"
+    token_id     = "prometheus@pve!monitoring"
+    token_secret = "REPLACE_WITH_TOKEN_SECRET"
+  },
+  {
+    name         = "pve-2"
+    address      = "192.168.2.10"
+    token_id     = "prometheus@pve!monitoring"
+    token_secret = "REPLACE_WITH_TOKEN_SECRET"
+  },
+]
+
 # Dashboards pulled from grafana.com into the "Homelab" folder.
 # gnet_id / revision are the numbers from https://grafana.com/grafana/dashboards/<id>.
 grafana_dashboards = [
   { name = "node-exporter-full", gnet_id = 1860, revision = 37 },
+  { name = "proxmox", gnet_id = 10347, revision = 5 },
   # { name = "prometheus-overview", gnet_id = 3662, revision = 2 },
   # { name = "alertmanager",        gnet_id = 9578, revision = 4 },
 ]

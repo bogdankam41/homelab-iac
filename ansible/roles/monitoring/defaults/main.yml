@@ -30,6 +30,14 @@ monitoring_self_name: "{{ inventory_hostname }}"
 monitoring_probes: []
 blackbox_listen_address: "127.0.0.1:9115"
 
+# --- Proxmox VE (prometheus-pve-exporter) -------------------------------
+# Each entry: { name, address, token_id, token_secret, labels (optional map) }.
+# token_id is "user@realm!tokenname" of a read-only (PVEAuditor) API token.
+# Empty list = the exporter is not installed and the pve job is not rendered.
+monitoring_pve_nodes: []
+pve_exporter_version: "3.10.1"
+pve_exporter_listen_address: "127.0.0.1:9221"
+
 # --- Targets behind TLS + basic auth (e.g. a host outside the LAN) -------
 # Each entry: { name, address, job, ca_cert (PEM), username, password }.
 monitoring_secure_targets: []

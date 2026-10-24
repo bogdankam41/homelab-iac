@@ -33,7 +33,9 @@ module "monitoring" {
   # Blackbox probes and TLS-protected exporters outside the LAN.
   monitoring_probes         = var.monitoring_probes
   monitoring_secure_targets = var.monitoring_secure_targets
-  external_labels           = { site = "home" }
+  # Both Proxmox nodes and all their guests, via the Proxmox API.
+  monitoring_pve_nodes = var.monitoring_pve_nodes
+  external_labels      = { site = "home" }
 
   prometheus_retention_time = var.prometheus_retention_time
 

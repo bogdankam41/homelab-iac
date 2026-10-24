@@ -70,6 +70,32 @@ scrape_configs:
         replacement: {{ blackbox_listen_address }}
 {% endfor %}
 
+{% if monitoring_pve_nodes %}
+  # Proxmox VE API through pve_exporter: the node plus every VM/CT on it, no
+  # agent inside the guests. instance is the node name (not its IP) and the
+  # job sets no `name` label of its own, so pve_guest_info keeps the guest's
+  # `name` — the grafana.com "Proxmox via Prometheus" board relies on both.
+  - job_name: pve
+    metrics_path: /pve
+    static_configs:
+{% for n in monitoring_pve_nodes %}
+      - targets: ["{{ n.address }}"]
+        labels:
+          instance: "{{ n.name }}"
+          module: "{{ n.name }}"
+{% for key, value in (n.get('labels') or {}) | dictsort %}
+          {{ key }}: "{{ value }}"
+{% endfor %}
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [module]
+        target_label: __param_module
+      - target_label: __address__
+        replacement: {{ pve_exporter_listen_address }}
+{% endif %}
+
   # Exporters reachable only over TLS + basic auth. The CA (self-signed cert)
   # and the password sit in files next to this config, not inline.
 {% for t in monitoring_secure_targets %}

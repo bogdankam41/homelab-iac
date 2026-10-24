@@ -327,7 +327,7 @@ kubectl get nodes -o wide
 
 ### 🔔 Алерты
 
-Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)). Пороги правятся из tfvars:
+Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)), а при заданных `monitoring_pve_nodes` — `GuestDown` и `PveStorageFull` (см. [🖥️ Proxmox и гости](#️-proxmox-и-гости)). Пороги правятся из tfvars:
 
 ```hcl
 alert_thresholds = {
@@ -345,6 +345,38 @@ telegram_chat_id   = "987654321"
 ```
 
 Совсем выключить правила — `alerts_enabled = false`.
+
+### 🖥️ Proxmox и гости
+
+Не на каждого гостя можно поставить node_exporter (Home Assistant OS, например), поэтому уровень гипервизора снимается отдельно — **prometheus-pve-exporter** на ВМ мониторинга ходит в API обеих нод и отдаёт по ноде и по каждой VM/CT статус, CPU, RAM, диск, сеть и uptime. Новый гость появляется в метриках сам, без правок в репозитории; node_exporter внутри гостя остаётся для детальных метрик.
+
+Ноды не в кластере, поэтому на каждой — свой read-only токен:
+
+```bash
+pveum user add prometheus@pve --comment "pve_exporter (read-only)"
+pveum acl modify / --users prometheus@pve --roles PVEAuditor
+pveum user token add prometheus@pve monitoring --privsep 0   # печатает секрет
+```
+
+Секреты — в `envs/pve-monitoring/terraform.tfvars`:
+
+```hcl
+monitoring_pve_nodes = [
+  { name = "pve",   address = "192.168.1.10", token_id = "prometheus@pve!monitoring", token_secret = "…" },
+  { name = "pve-2", address = "192.168.2.10", token_id = "prometheus@pve!monitoring", token_secret = "…" },
+]
+```
+
+Экспортер один на все ноды и слушает только `127.0.0.1:9221`: Prometheus передаёт ноду в `?target=`, а её учётку — в `?module=` (по модулю на ноду в `/etc/pve_exporter/pve.yml`). У job `pve` `instance` — имя ноды, а метка `name` — имя гостя из `pve_guest_info`, на этом построен дашборд «Proxmox via Prometheus» ([10347](https://grafana.com/grafana/dashboards/10347)):
+
+```hcl
+grafana_dashboards = [
+  # …
+  { name = "proxmox", gnet_id = 10347, revision = 5 },
+]
+```
+
+Алерты: `GuestDown` — гость с `onboot=1` не запущен (выключенные намеренно не шумят), `PveStorageFull` — пул хранилища (в том числе thin-pool `local-lvm`, которого не видно в метриках файловых систем) заполнен выше `alert_disk_threshold`.
 
 ### 🌡️ Температура
 

@@ -123,6 +123,19 @@ variable "monitoring_probes" {
   default = []
 }
 
+variable "monitoring_pve_nodes" {
+  description = "Proxmox nodes scraped through pve_exporter (see modules/monitoring_vm). Token secrets live in terraform.tfvars."
+  type = list(object({
+    name         = string
+    address      = string
+    token_id     = string
+    token_secret = string
+    labels       = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
 variable "monitoring_secure_targets" {
   description = "TLS + basic-auth exporters (see modules/monitoring_vm). Password lives in terraform.tfvars."
   type = list(object({

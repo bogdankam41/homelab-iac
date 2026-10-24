@@ -202,6 +202,29 @@ variable "monitoring_secure_targets" {
   sensitive = true
 }
 
+variable "monitoring_pve_nodes" {
+  description = <<-EOT
+    Proxmox nodes scraped through prometheus-pve-exporter on the monitoring VM:
+    the node itself plus every VM/CT on it, with no agent inside the guests.
+
+      { name = "pve", address = "192.168.1.10", token_id = "prometheus@pve!monitoring", token_secret = "…" }
+
+    token_id is a read-only API token (role PVEAuditor) created on that node —
+    nodes that are not clustered need one each. labels are optional extras.
+    Empty = no exporter, no pve scrape job.
+  EOT
+
+  type = list(object({
+    name         = string
+    address      = string
+    token_id     = string
+    token_secret = string
+    labels       = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
 variable "default_scrape_job" {
   type        = string
   description = "Scrape job used by targets that do not name one — plain node_exporter hosts."
@@ -238,6 +261,12 @@ variable "blackbox_exporter_version" {
   type        = string
   description = "blackbox_exporter release to install (without the leading v)."
   default     = "0.28.0"
+}
+
+variable "pve_exporter_version" {
+  type        = string
+  description = "prometheus-pve-exporter release to install from PyPI."
+  default     = "3.10.1"
 }
 
 variable "node_exporter_version" {

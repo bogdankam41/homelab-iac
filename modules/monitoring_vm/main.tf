@@ -25,6 +25,7 @@ locals {
       monitoring_probes  = var.monitoring_probes
 
       monitoring_secure_targets = var.monitoring_secure_targets
+      monitoring_pve_nodes      = var.monitoring_pve_nodes
       monitoring_default_job    = var.default_scrape_job
       monitoring_self_name      = var.vm_name
 
@@ -36,6 +37,7 @@ locals {
       alertmanager_version            = var.alertmanager_version
       node_exporter_version           = var.node_exporter_version
       blackbox_exporter_version       = var.blackbox_exporter_version
+      pve_exporter_version            = var.pve_exporter_version
       monitoring_alerts_enabled       = var.alerts_enabled
       alertmanager_telegram_bot_token = var.telegram_bot_token
       alertmanager_telegram_chat_id   = var.telegram_chat_id

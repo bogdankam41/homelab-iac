@@ -1,0 +1,64 @@
+---
+# prometheus-pve-exporter is a Python app (no static binary), so it lives in its
+# own venv. One instance serves every Proxmox node: Prometheus passes the node
+# as ?target= and picks its credentials with ?module= (one module per node).
+- name: Install python3-venv
+  ansible.builtin.apt:
+    name: python3-venv
+    state: present
+
+- name: Check the installed pve_exporter version
+  ansible.builtin.command: /opt/pve_exporter/bin/pip show prometheus-pve-exporter
+  register: pve_exporter_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install pve_exporter {{ pve_exporter_version }}
+  when: "('Version: ' ~ pve_exporter_version) not in (pve_exporter_installed.stdout | default(''))"
+  block:
+    - name: Create the pve_exporter virtualenv
+      ansible.builtin.command: python3 -m venv /opt/pve_exporter
+      args:
+        creates: /opt/pve_exporter/bin/pip
+
+    - name: Install prometheus-pve-exporter into the virtualenv
+      ansible.builtin.command: /opt/pve_exporter/bin/pip install --quiet prometheus-pve-exporter=={{ pve_exporter_version }}
+      register: pve_exporter_pip
+      until: pve_exporter_pip is succeeded
+      retries: 5
+      delay: 10
+      changed_when: true
+      notify: Restart pve_exporter
+
+- name: Create the pve_exporter config directory
+  ansible.builtin.file:
+    path: /etc/pve_exporter
+    state: directory
+    owner: root
+    group: prometheus
+    mode: '0750'
+
+# Holds the API token secrets.
+- name: Deploy pve.yml
+  ansible.builtin.template:
+    src: pve.yml.j2
+    dest: /etc/pve_exporter/pve.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  no_log: true
+  notify: Restart pve_exporter
+
+- name: Install the pve_exporter systemd unit
+  ansible.builtin.template:
+    src: pve_exporter.service.j2
+    dest: /etc/systemd/system/pve_exporter.service
+    mode: '0644'
+  notify: Restart pve_exporter
+
+- name: Ensure pve_exporter is started and enabled
+  ansible.builtin.systemd:
+    name: pve_exporter
+    state: started
+    enabled: true
+    daemon_reload: true
