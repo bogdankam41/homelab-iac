@@ -1,0 +1,22 @@
+---
+# A drop-in instead of editing /etc/systemd/logind.conf: package upgrades
+# leave conf.d alone.
+- name: Create the logind drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    mode: '0755'
+
+- name: Set the lid switch action
+  ansible.builtin.template:
+    src: lid.conf.j2
+    dest: /etc/systemd/logind.conf.d/lid.conf
+    mode: '0644'
+  notify: Reload systemd-logind
+
+- name: Mask the sleep targets
+  when: pve_node_mask_sleep
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    masked: true
+  loop: "{{ pve_node_sleep_targets }}"

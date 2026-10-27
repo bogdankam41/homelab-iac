@@ -1,0 +1,10 @@
+---
+# Standalone: host-level settings for the Proxmox nodes (lid close does not
+# suspend the laptop, sleep targets masked). Run by hand against each node:
+#   ansible-playbook -i '192.168.1.10,' -u root --private-key ~/.ssh/private-key-ed25519 ansible/pve_node.yml
+#   ansible-playbook -i '192.168.2.10,' -u root --private-key ~/.ssh/private-key-ed25519 ansible/pve_node.yml
+- name: Configure the Proxmox nodes
+  hosts: all
+  become: true
+  roles:
+    - pve_node

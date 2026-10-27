@@ -86,6 +86,8 @@ proxmox/
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
 │   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
 │   ├── roles/keenetic_node_exporter/  # пакет Entware + свой init-скрипт, только raw
+│   ├── pve_node.yml               # настройка самих нод Proxmox (крышка ноутбука, сон)
+│   ├── roles/pve_node/            # logind drop-in + маскировка sleep-таргетов
 │   └── inventory/                 # (gitignored) inventory генерирует Terraform
 ├── modules/
 │   ├── adguard_lxc/               # ЕДИНЫЙ модуль: LXC-контейнер + запуск Ansible
@@ -195,6 +197,24 @@ tofu fmt -check -recursive
 tflint --init && tflint --recursive
 ansible-galaxy collection install -r ansible/requirements.yml && ansible-lint
 ```
+
+## 💻 Ноды Proxmox
+
+Обе ноды — ноутбуки. По умолчанию systemd-logind при закрытии крышки делает `suspend`, причём и от сети тоже: нода засыпает вместе со всеми гостями и просыпается, только когда крышку откроют. Роль [`pve_node`](ansible/roles/pve_node) это отключает:
+
+- drop-in `/etc/systemd/logind.conf.d/lid.conf` — `HandleLidSwitch`, `HandleLidSwitchExternalPower` и `HandleLidSwitchDocked` = `ignore` (`pve_node_lid_action`). Сам `logind.conf` не трогается, так что обновления пакетов его не перетрут; logind перечитывает конфиг по SIGHUP, сессии не рвутся;
+- маскирует `sleep`/`suspend`/`hibernate`/`hybrid-sleep`/`suspend-then-hibernate.target` (`pve_node_mask_sleep`), чтобы ноду не усыпило уже ничто.
+
+```bash
+ansible-playbook -i '192.168.1.10,' -u root \
+  --private-key ~/.ssh/private-key-ed25519 ansible/pve_node.yml
+ansible-playbook -i '192.168.2.10,' -u root \
+  --private-key ~/.ssh/private-key-ed25519 ansible/pve_node.yml
+```
+
+Проверить: `busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager HandleLidSwitch HandleLidSwitchExternalPower` — оба `"ignore"`.
+
+С закрытой крышкой ноутбук греется чуть сильнее: часть тепла уходит через клавиатуру. У `pve-2` (XPS 13 9365) вентилятора нет совсем, охлаждение пассивное, поэтому она заметно горячее `pve` даже без нагрузки. Если `HighTemperature` начнёт срабатывать, крышку лучше держать открытой.
 
 ## 📝 Заметки
 

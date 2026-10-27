@@ -1,0 +1,15 @@
+---
+# Host-level settings for the Proxmox nodes themselves. Both nodes are
+# laptops, and out of the box systemd-logind suspends on lid close - on AC
+# power too - which freezes every guest on the node.
+# logind action for the lid switch: on battery, on AC and docked.
+pve_node_lid_action: ignore
+# Mask the sleep targets as well, so nothing else (a stray `systemctl suspend`,
+# a power key, an idle action) can put a hypervisor to sleep.
+pve_node_mask_sleep: true
+pve_node_sleep_targets:
+  - sleep.target
+  - suspend.target
+  - hibernate.target
+  - hybrid-sleep.target
+  - suspend-then-hibernate.target

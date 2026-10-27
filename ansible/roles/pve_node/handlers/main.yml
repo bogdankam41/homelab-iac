@@ -1,0 +1,6 @@
+---
+# SIGHUP makes logind re-read its config; a restart is not needed and would
+# needlessly touch the login sessions.
+- name: Reload systemd-logind
+  ansible.builtin.command: systemctl kill --signal=SIGHUP systemd-logind
+  changed_when: true
