@@ -29,6 +29,7 @@ locals {
       monitoring_federation     = var.monitoring_federation
       monitoring_snmp_targets   = var.monitoring_snmp_targets
       monitoring_sks_switches   = var.monitoring_sks_switches
+      monitoring_dvr_recorders  = var.monitoring_dvr_recorders
       monitoring_default_job    = var.default_scrape_job
       monitoring_self_name      = var.vm_name
       monitoring_self_labels    = var.self_labels

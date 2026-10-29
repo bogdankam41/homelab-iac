@@ -112,6 +112,19 @@ monitoring_sks_switches = [
   },
 ]
 
+# Video recorders on XiongMai firmware (NETSurveillance web UI, XMeye app): no
+# SNMP, dvrip_exporter logs in over DVRIP (TCP 34567) like the XMeye client.
+# Camera names come from the recorder's channel titles.
+monitoring_dvr_recorders = [
+  {
+    name     = "nvr"
+    address  = "192.168.1.5"
+    username = "admin"
+    password = "REPLACE_WITH_PASSWORD"
+    labels   = { role = "nvr", site = "home" }
+  },
+]
+
 # Dashboards pulled from grafana.com into the "Homelab" folder.
 # gnet_id / revision are the numbers from https://grafana.com/grafana/dashboards/<id>.
 grafana_dashboards = [

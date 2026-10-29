@@ -333,6 +333,28 @@ variable "monitoring_sks_switches" {
   sensitive = true
 }
 
+variable "monitoring_dvr_recorders" {
+  description = <<-EOT
+    XiongMai-based video recorders (NETSurveillance web UI, XMeye app), which
+    have no SNMP: read over their DVRIP protocol (TCP 34567) by dvrip_exporter
+    (cameras online, per-channel recording and bitrate, disks, archive depth).
+
+      { name = "nvr", address = "192.168.1.5", username = "admin", password = "…" }
+
+    Empty = no exporter, no dvr scrape job.
+  EOT
+
+  type = list(object({
+    name     = string
+    address  = string
+    username = string
+    password = string
+    labels   = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
 variable "snmp_exporter_version" {
   type        = string
   description = "snmp_exporter release to install (without the leading v)."

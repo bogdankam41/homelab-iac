@@ -147,4 +147,60 @@ groups:
           summary: 'High temperature on {{ $labels.name }}'
           description: 'Switch board is at {{ printf "%.0f" $value }}°C.'{% endraw %}
 {% endif %}
+{% if monitoring_dvr_recorders %}
+
+  # Video recorders: job dvr (dvrip_exporter), channel/title = camera.
+  # A recorder that stops answering is already InstanceDown (up == 0).
+  - name: homelab.dvr
+    rules:
+      # IP cameras: the recorder lost the stream (camera power/PoE, cable, IP).
+      - alert: CameraOffline
+        expr: dvr_channel_connected == 0 or dvr_channel_video_loss == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:{% raw %}
+          summary: 'Camera {{ $labels.title }} is offline on {{ $labels.name }}'
+          description: 'Channel {{ $labels.channel }} gets no video from the camera - check its power (PoE), cable and address.'{% endraw %}
+
+      - alert: CameraNotRecording
+        expr: dvr_channel_recording == 0 and on (instance, channel) dvr_channel_connected == 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:{% raw %}
+          summary: 'Camera {{ $labels.title }} is not being recorded on {{ $labels.name }}'
+          description: 'The camera is connected, but the recorder does not record channel {{ $labels.channel }} - check the record schedule.'{% endraw %}
+
+      # Recorders like to stop writing silently: live view keeps working, the archive does not grow.
+      - alert: DvrRecordingStalled
+        expr: dvr_last_record_age_seconds > {{ alert_dvr_record_age }}
+        for: 2m
+        labels:
+          severity: critical
+          threshold: "{{ alert_dvr_record_age }}"
+        annotations:{% raw %}
+          summary: '{{ $labels.name }} has stopped recording'
+          description: 'The newest video on disk is {{ humanizeDuration $value }} old.'{% endraw %}
+
+      - alert: DvrDiskProblem
+        expr: dvr_disks == 0 or dvr_disk_status != 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:{% raw %}
+          summary: 'Disk problem on {{ $labels.name }}'
+          description: '{{ if $labels.disk }}Disk {{ $labels.disk }} partition {{ $labels.partition }} reports status {{ $value }}{{ else }}The recorder sees no usable disk{{ end }}.'{% endraw %}
+
+      # Expected for a week after a disk is replaced or formatted.
+      - alert: DvrArchiveShort
+        expr: dvr_archive_depth_seconds < {{ alert_dvr_archive_days }} * 86400
+        for: 1h
+        labels:
+          severity: warning
+          threshold: "{{ alert_dvr_archive_days }}"
+        annotations:{% raw %}
+          summary: 'Short video archive on {{ $labels.name }}'
+          description: 'The disk holds only {{ humanizeDuration $value }} of video.'{% endraw %}
+{% endif %}
 {% endif %}

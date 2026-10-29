@@ -78,6 +78,10 @@
   ansible.builtin.include_tasks: sks_exporter.yml
   when: monitoring_sks_switches | length > 0
 
+- name: Install and configure dvrip_exporter
+  ansible.builtin.include_tasks: dvrip_exporter.yml
+  when: monitoring_dvr_recorders | length > 0
+
 - name: Install and configure Prometheus
   ansible.builtin.include_tasks: prometheus.yml
 

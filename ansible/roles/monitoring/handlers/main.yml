@@ -60,3 +60,10 @@
     name: sks_exporter
     state: restarted
     daemon_reload: true
+
+# dvrip_exporter keeps a DVRIP session per recorder; a restart just logs in again.
+- name: Restart dvrip_exporter
+  ansible.builtin.systemd:
+    name: dvrip_exporter
+    state: restarted
+    daemon_reload: true

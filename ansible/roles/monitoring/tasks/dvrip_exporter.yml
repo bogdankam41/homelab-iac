@@ -1,0 +1,46 @@
+---
+# XiongMai-based video recorders (NETSurveillance / XMeye) have no SNMP, only
+# their DVRIP protocol on port 34567. files/dvrip_exporter.py speaks it (stdlib
+# only, no venv). One instance serves every recorder: Prometheus passes it as
+# ?target=<address>.
+- name: Create the dvrip_exporter config directory
+  ansible.builtin.file:
+    path: /etc/dvrip_exporter
+    state: directory
+    owner: root
+    group: prometheus
+    mode: '0750'
+
+- name: Install dvrip_exporter
+  ansible.builtin.copy:
+    src: dvrip_exporter.py
+    dest: /usr/local/bin/dvrip_exporter
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart dvrip_exporter
+
+# Holds the recorder passwords.
+- name: Deploy recorders.json
+  ansible.builtin.template:
+    src: dvrip_recorders.json.j2
+    dest: /etc/dvrip_exporter/recorders.json
+    owner: root
+    group: prometheus
+    mode: '0640'
+  no_log: true
+  notify: Restart dvrip_exporter
+
+- name: Install the dvrip_exporter systemd unit
+  ansible.builtin.template:
+    src: dvrip_exporter.service.j2
+    dest: /etc/systemd/system/dvrip_exporter.service
+    mode: '0644'
+  notify: Restart dvrip_exporter
+
+- name: Ensure dvrip_exporter is started and enabled
+  ansible.builtin.systemd:
+    name: dvrip_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

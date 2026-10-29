@@ -55,6 +55,15 @@ sks_exporter_listen_address: "127.0.0.1:9117"
 # Switch CPUs are weak (an SNMP walk or a web login is noticeable on them).
 monitoring_switch_scrape_interval: "30s"
 
+# --- Video recorders ----------------------------------------------------
+# XiongMai-based NVR/DVR (NETSurveillance web UI, XMeye app), read over their
+# DVRIP protocol (TCP 34567) by dvrip_exporter. Each entry: { name, address,
+# username, password, labels (optional map) }.
+# Empty list = dvrip_exporter is not installed and the dvr job is not rendered.
+monitoring_dvr_recorders: []
+dvrip_exporter_listen_address: "127.0.0.1:9118"
+monitoring_dvr_scrape_interval: "30s"
+
 # --- Federation from other Prometheus servers ---------------------------
 # Each entry: { job, address, match (optional list), labels (optional map) }.
 # Pulls a selected set of series from another Prometheus's /federate — e.g. the
@@ -104,6 +113,10 @@ alert_temp_chips: ".*coretemp.*|.*k10temp.*|.*cpu_thermal.*|.*nvme.*|.*drivetemp
 alert_switch_flaps: 4
 alert_switch_errors: 100
 alert_switch_temp_threshold: 70
+# Video recorders: the newest video on disk older than this (seconds) means
+# recording has stopped; an archive shorter than this many days is too short.
+alert_dvr_record_age: 600
+alert_dvr_archive_days: 7
 
 # --- Grafana ------------------------------------------------------------
 grafana_listen_port: 3000

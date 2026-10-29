@@ -201,3 +201,16 @@ variable "monitoring_sks_switches" {
   default   = []
   sensitive = true
 }
+
+variable "monitoring_dvr_recorders" {
+  description = "Video recorders read over DVRIP (see modules/monitoring_vm). Passwords live in terraform.tfvars."
+  type = list(object({
+    name     = string
+    address  = string
+    username = string
+    password = string
+    labels   = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}

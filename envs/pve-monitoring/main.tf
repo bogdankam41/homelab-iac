@@ -38,6 +38,8 @@ module "monitoring" {
   # Network switches: SNMP where the switch has it, the web UI's API where not.
   monitoring_snmp_targets = var.monitoring_snmp_targets
   monitoring_sks_switches = var.monitoring_sks_switches
+  # Video recorder: cameras, recording and the archive, over its DVRIP port.
+  monitoring_dvr_recorders = var.monitoring_dvr_recorders
   # Long-term copy of the k3s cluster's metrics (its own Prometheus keeps ~3 days).
   monitoring_federation = var.monitoring_federation
   external_labels       = { site = "home" }

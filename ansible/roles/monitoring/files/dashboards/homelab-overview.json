@@ -232,7 +232,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(up{job=~\"node|pve|snmp|sks\", site=~\"$site\"} == 0) or vector(0)",
+          "expr": "count(up{job=~\"node|pve|snmp|sks|dvr\", site=~\"$site\"} == 0) or vector(0)",
           "legendFormat": "",
           "instant": true,
           "range": false

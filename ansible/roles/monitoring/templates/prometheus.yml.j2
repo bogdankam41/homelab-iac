@@ -144,6 +144,28 @@ scrape_configs:
         replacement: {{ sks_exporter_listen_address }}
 {% endif %}
 
+{% if monitoring_dvr_recorders %}
+  # Video recorders (no SNMP) through dvrip_exporter and their DVRIP port.
+  - job_name: dvr
+    scrape_interval: {{ monitoring_dvr_scrape_interval }}
+    static_configs:
+{% for r in monitoring_dvr_recorders %}
+      - targets: ["{{ r.address }}"]
+        labels:
+          name: "{{ r.name }}"
+{% for key, value in (r.get('labels') or {}) | dictsort %}
+          {{ key }}: "{{ value }}"
+{% endfor %}
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: {{ dvrip_exporter_listen_address }}
+{% endif %}
+
   # Federation: a selected set of series from another Prometheus. honor_labels
   # keeps the source's job/instance/namespace labels; the entry's labels (e.g.
   # cluster) are added on top, so the series do not mix with local ones.

@@ -1,0 +1,6 @@
+{# DVRIP credentials per recorder, keyed by the address Prometheus passes as ?target=. #}
+{%- set recorders = {} -%}
+{%- for r in monitoring_dvr_recorders -%}
+{%-   set _ = recorders.update({r.address: {'username': r.username, 'password': r.password}}) -%}
+{%- endfor -%}
+{{ recorders | to_nice_json }}

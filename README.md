@@ -80,9 +80,10 @@ proxmox/
 │   ├── roles/k3s_server/          # мастер + выгрузка kubeconfig на Mac
 │   ├── roles/k3s_agent/           # воркеры (join по токену мастера)
 │   ├── monitoring.yml             # плейбук стека мониторинга
-│   ├── roles/monitoring/          # Prometheus + Alertmanager + Grafana (+ snmp/sks экспортеры)
+│   ├── roles/monitoring/          # Prometheus + Alertmanager + Grafana (+ snmp/sks/dvrip экспортеры)
 │   │   ├── files/sks_exporter.py  # экспортер для коммутаторов SKS3200 без SNMP
-│   │   └── files/dashboards/      # свои дашборды Grafana (обзор, k3s, температура, коммутаторы)
+│   │   ├── files/dvrip_exporter.py  # экспортер для видеорегистраторов XiongMai (DVRIP)
+│   │   └── files/dashboards/      # свои дашборды Grafana (обзор, k3s, температура, коммутаторы, видеонаблюдение)
 │   ├── node_exporter.yml          # поставить экспортер на любое устройство
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
 │   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
@@ -366,7 +367,7 @@ ansible-playbook -i '192.168.1.1,' -u root \
 
 ### 🔔 Алерты
 
-Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)), а при заданных `monitoring_pve_nodes` — `GuestDown` и `PveStorageFull` (см. [🖥️ Proxmox и гости](#️-proxmox-и-гости)), при заданных коммутаторах — `SwitchPortFlapping`, `SwitchPortErrors`, `SwitchHighCpu`, `SwitchHighTemperature` (см. [🔌 Коммутаторы](#-коммутаторы)). Пороги правятся из tfvars:
+Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)), а при заданных `monitoring_pve_nodes` — `GuestDown` и `PveStorageFull` (см. [🖥️ Proxmox и гости](#️-proxmox-и-гости)), при заданных коммутаторах — `SwitchPortFlapping`, `SwitchPortErrors`, `SwitchHighCpu`, `SwitchHighTemperature` (см. [🔌 Коммутаторы](#-коммутаторы)), при заданных регистраторах — `CameraOffline`, `CameraNotRecording`, `DvrRecordingStalled`, `DvrDiskProblem`, `DvrArchiveShort` (см. [📹 Видеорегистратор](#-видеорегистратор)). Пороги правятся из tfvars:
 
 ```hcl
 alert_thresholds = {
@@ -465,6 +466,32 @@ API считает только пакеты, без байтов: трафик 
 
 Скрейп у обоих job — раз в 30 с (`monitoring_switch_scrape_interval`): CPU у коммутаторов слабые. Недоступный коммутатор даёт `up == 0` и общий `InstanceDown`. Свои алерты: `SwitchPortFlapping` (больше `alert_switch_flaps` смен линка за 15 мин), `SwitchPortErrors` (больше `alert_switch_errors` битых пакетов за 15 мин), `SwitchHighCpu` (CPU за 5 мин выше `alert_cpu_threshold`), `SwitchHighTemperature` (плата выше `alert_switch_temp_threshold`, 70 °C).
 
+### 📹 Видеорегистратор
+
+`nvr` (`192.168.1.5`) — сетевой регистратор на прошивке XiongMai (веб-интерфейс NETSurveillance, приложение XMeye), к нему подключены IP-камеры. SNMP в прошивке нет, но её родной протокол DVRIP (JSON поверх TCP 34567, им же ходит XMeye) после логина отдаёт состояние каналов и дисков. [`files/dvrip_exporter.py`](ansible/roles/monitoring/files/dvrip_exporter.py) логинится так же, держит сессию и шлёт keepalive каждые 15 с: молчащую сессию регистратор закрывает примерно через 40 с, а логин на каждом скрейпе засорял бы его журнал. Только stdlib Python, слушает `127.0.0.1:9118`, job `dvr`:
+
+```hcl
+monitoring_dvr_recorders = [
+  { name = "nvr", address = "192.168.1.5", username = "admin", password = "…",
+    labels = { role = "nvr", site = "home" } },
+]
+```
+
+| Метрика | Откуда | Что значит |
+| --- | --- | --- |
+| `dvr_channel_connected`, `dvr_channel_video_loss` | `NetWork.ChnStatus`, `WorkState` | регистратор получает поток с камеры; пустые каналы (`NoConfig`) не экспортируются |
+| `dvr_channel_recording`, `dvr_channel_bitrate_bits` | `WorkState` | канал пишется сейчас; битрейт потока |
+| `dvr_channel_motion`, `dvr_channel_video_blind` | `WorkState` | детектор движения и закрытия объектива (снимок раз в 30 с) |
+| `dvr_disk_size_bytes`, `dvr_disk_free_bytes`, `dvr_disk_status`, `dvr_disks` | `StorageInfo` | разделы дисков; свободно 0 — норма, перезапись включена |
+| `dvr_last_record_age_seconds` | `StorageInfo` + часы регистратора | сколько прошло с конца самого свежего видео |
+| `dvr_archive_depth_seconds` | `StorageInfo` | от самой старой записи до самой новой |
+
+Метка камеры `title` — название канала из самого регистратора, `channel` — его номер. Времена записей регистратор отдаёт по своим локальным часам, поэтому возраст последней записи считается тоже по ним (`OPTimeQuery`): часовой пояс не важен.
+
+Алерты: `CameraOffline` (нет потока 5 мин), `CameraNotRecording` (камера в сети, но канал не пишется 10 мин), `DvrRecordingStalled` (свежее видео старше `alert_dvr_record_age`, 600 с, — регистратор молча перестал писать), `DvrDiskProblem` (раздел не в норме или диска нет), `DvrArchiveShort` (архив короче `alert_dvr_archive_days`, 7 дней; после замены диска неделю это ожидаемо). Недоступный регистратор — общий `InstanceDown`.
+
+Пароль хранится только в `terraform.tfvars`. Прошивки XiongMai известны уязвимостями, в том числе в самом DVRIP, — регистратор и камеры не пробрасывать наружу (проверить UPnP на роутере), смотреть их только из LAN.
+
 ### 🌡️ Температура
 
 Отдельный экспортер не нужен: коллектор `hwmon` включён в `node_exporter` по умолчанию и читает `/sys/class/hwmon`, то есть всё, для чего в ядре загружен драйвер. Обе ноды — ноутбуки Dell (`pve` — XPS 15 9560, `pve-2` — XPS 13 9365), набор чипов у них одинаковый:
@@ -512,6 +539,8 @@ Grafana получает Prometheus-датасорс и папку `Homelab` ч�
 Фильтр `Площадка` (метка `site` из `monitoring_targets`) сужает всё сразу. Новый хост с метками `site`/`role` появляется на дашборде сам. Зелёный/оранжевый/красный — только статусы, и всегда рядом с текстом или числом; у роутеров на графиках закреплённые цвета, поэтому фильтр их не перекрашивает. Домашнюю страницу задаёт `grafana_home_dashboard` в роли.
 
 **Homelab — коммутаторы** (`files/dashboards/homelab-switches.json`) — оба коммутатора на одном экране: статус, uptime, CPU/RAM, температура; история линка по каждому порту; трафик SNMP-портов (bit/s) и пакеты SKS3200; договорённые скорости линков; члены LAG (selected / standby; агрегат задуман как резервирование, standby — норма); порты с ошибками за выбранный период. Фильтр `Коммутатор` сужает всё сразу. На обзорной странице недоступный коммутатор считается в плитке «Не отвечают».
+
+**Homelab — видеонаблюдение** (`files/dashboards/homelab-dvr.json`) — регистратор и камеры: связь с регистратором, возраст последней записи, глубина архива, состояние и ёмкость диска; плитки «в сети» и «пишется» по каждой камере; история связи с камерами и детектора движения, битрейт, глубина архива во времени. Фильтр `Регистратор`. Недоступный регистратор тоже считается в плитке «Не отвечают» на обзоре.
 
 **k3s — обзор** (`files/dashboards/k3s-overview.json`) — кластер k3s на одном экране. Метрики Kubernetes собирает Prometheus из kube-prometheus-stack внутри кластера, но хранит их всего несколько дней. Поэтому основной Prometheus забирает нужные дашборду серии через federation (`monitoring_federation` в `terraform.tfvars`, job `k3s-federate`) и держит их 30 дней, как всё остальное. Все такие серии получают метку `cluster="k3s"`. Метрики нод (CPU, RAM, диск, uptime) берутся из собственного node_exporter на нодах (job `node`, `role="k3s"`). Сам Prometheus кластера опубликован на NodePort:
 
