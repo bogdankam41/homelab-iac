@@ -447,7 +447,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sks_port_up{job=\"sks\", name=~\"$switch\"}",
+          "expr": "label_replace(sks_port_up{job=\"sks\", name=~\"$switch\"}, \"order\", \"$1\", \"port\", \"([0-9])\")",
           "legendFormat": "{{name}} порт {{port}}"
         }
       ],
@@ -731,7 +731,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sks_port_speed_bits{job=\"sks\", name=~\"$switch\"} and on (instance, port) sks_port_up{job=\"sks\", name=~\"$switch\"} == 1",
+          "expr": "label_replace(sks_port_speed_bits{job=\"sks\", name=~\"$switch\"} and on (instance, port) sks_port_up{job=\"sks\", name=~\"$switch\"} == 1, \"order\", \"$1\", \"port\", \"([0-9])\")",
           "legendFormat": "{{name}} порт {{port}}"
         }
       ],
@@ -791,7 +791,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sks_lag_member_active{job=\"sks\", name=~\"$switch\"}",
+          "expr": "label_replace(sks_lag_member_active{job=\"sks\", name=~\"$switch\"}, \"order\", \"$1\", \"port\", \"([0-9])\")",
           "legendFormat": "{{name}} группа {{group}} порт {{port}}"
         }
       ],
@@ -837,7 +837,7 @@
         "textMode": "value_and_name",
         "orientation": "horizontal"
       },
-      "description": "Члены агрегата: selected — порт несёт трафик, standby — в резерве. Агрегат задуман как резервирование, не сложение: один selected и один standby — норма. Тревожно, если selected нет ни одного."
+      "description": "Члены агрегата: selected — порт несёт трафик, standby — в резерве. Агрегат задуман как резервирование, не сложение: один selected и один standby — норма. Тревожно, если selected нет ни одного. В standby-порт SKS3200 всё равно рассылает трафик, пришедший с аплинка (неизвестный unicast, broadcast): на графике «отправлено пакетов» он виден, core-switch его отбрасывает."
     },
     {
       "id": 14,
@@ -879,12 +879,17 @@
         "defaults": {
           "decimals": 0,
           "min": 0,
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
               },
               {
                 "color": "red",
@@ -907,7 +912,7 @@
         "displayMode": "basic",
         "showUnfilled": true
       },
-      "description": "Битые пакеты за выбранный период, только порты с ошибками. Пусто — ошибок нет.",
+      "description": "Битые пакеты за выбранный период, только порты с ошибками. 0 — ошибок нет ни на одном порту.",
       "interval": "",
       "maxDataPoints": 1
     },
