@@ -1,0 +1,45 @@
+---
+# SKS3200-series switches have no SNMP, only a web UI on top of a JSON API.
+# files/sks_exporter.py reads that API (stdlib only, no venv). One instance
+# serves every switch: Prometheus passes it as ?target=<address>.
+- name: Create the sks_exporter config directory
+  ansible.builtin.file:
+    path: /etc/sks_exporter
+    state: directory
+    owner: root
+    group: prometheus
+    mode: '0750'
+
+- name: Install sks_exporter
+  ansible.builtin.copy:
+    src: sks_exporter.py
+    dest: /usr/local/bin/sks_exporter
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart sks_exporter
+
+# Holds the web UI passwords.
+- name: Deploy switches.json
+  ansible.builtin.template:
+    src: sks_switches.json.j2
+    dest: /etc/sks_exporter/switches.json
+    owner: root
+    group: prometheus
+    mode: '0640'
+  no_log: true
+  notify: Restart sks_exporter
+
+- name: Install the sks_exporter systemd unit
+  ansible.builtin.template:
+    src: sks_exporter.service.j2
+    dest: /etc/systemd/system/sks_exporter.service
+    mode: '0644'
+  notify: Restart sks_exporter
+
+- name: Ensure sks_exporter is started and enabled
+  ansible.builtin.systemd:
+    name: sks_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

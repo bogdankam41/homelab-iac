@@ -1,0 +1,37 @@
+# Managed by Ansible (roles/monitoring) — do not edit by hand.
+# Loaded next to the release's stock snmp.yml (if_mib & co).
+# One auth per device; Prometheus picks it with ?auth=<name>.
+auths:
+{% for t in monitoring_snmp_targets %}
+  {{ t.name }}:
+    version: 2
+    community: "{{ t.community }}"
+{% endfor %}
+
+modules:
+  # CPU and memory of the 8xSFP+ L3 switch (Realtek RTL8390, enterprise 63563).
+  # The private MIB is laid out like DCN's PRIVATE-MIB; the OIDs were matched
+  # against `show cpu usage` / `show memory usage` on the switch itself.
+  dcn_switch:
+    get:
+      - 1.3.6.1.4.1.63563.100.1.11.6.0
+      - 1.3.6.1.4.1.63563.100.1.11.7.0
+      - 1.3.6.1.4.1.63563.100.1.11.15.0
+      - 1.3.6.1.4.1.63563.100.1.11.16.0
+    metrics:
+      - name: switchMemorySizeBytes
+        oid: 1.3.6.1.4.1.63563.100.1.11.6
+        type: gauge
+        help: Total memory of the switch.
+      - name: switchMemoryUsedBytes
+        oid: 1.3.6.1.4.1.63563.100.1.11.7
+        type: gauge
+        help: Memory in use.
+      - name: switchCpuBusy1m
+        oid: 1.3.6.1.4.1.63563.100.1.11.15
+        type: gauge
+        help: CPU busy over the last minute, percent.
+      - name: switchCpuBusy5m
+        oid: 1.3.6.1.4.1.63563.100.1.11.16
+        type: gauge
+        help: CPU busy over the last 5 minutes, percent.

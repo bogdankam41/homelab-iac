@@ -1,0 +1,6 @@
+{# Web UI credentials per switch, keyed by the address Prometheus passes as ?target=. #}
+{%- set switches = {} -%}
+{%- for s in monitoring_sks_switches -%}
+{%-   set _ = switches.update({s.address: {'username': s.username, 'password': s.password}}) -%}
+{%- endfor -%}
+{{ switches | to_nice_json }}

@@ -1,0 +1,17 @@
+# Managed by Ansible (roles/monitoring) — do not edit by hand.
+[Unit]
+Description=Prometheus exporter for SKS3200 web-managed switches
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+ExecStart=/usr/bin/python3 -I /usr/local/bin/sks_exporter \
+  --config.file=/etc/sks_exporter/switches.json \
+  --web.listen-address={{ sks_exporter_listen_address }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

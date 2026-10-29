@@ -48,3 +48,15 @@
     name: pve_exporter
     state: restarted
     daemon_reload: true
+
+- name: Restart snmp_exporter
+  ansible.builtin.systemd:
+    name: snmp_exporter
+    state: restarted
+    daemon_reload: true
+
+- name: Restart sks_exporter
+  ansible.builtin.systemd:
+    name: sks_exporter
+    state: restarted
+    daemon_reload: true

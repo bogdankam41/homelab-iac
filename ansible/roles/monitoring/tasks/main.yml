@@ -70,6 +70,14 @@
   ansible.builtin.include_tasks: pve_exporter.yml
   when: monitoring_pve_nodes | length > 0
 
+- name: Install and configure snmp_exporter
+  ansible.builtin.include_tasks: snmp_exporter.yml
+  when: monitoring_snmp_targets | length > 0
+
+- name: Install and configure sks_exporter
+  ansible.builtin.include_tasks: sks_exporter.yml
+  when: monitoring_sks_switches | length > 0
+
 - name: Install and configure Prometheus
   ansible.builtin.include_tasks: prometheus.yml
 

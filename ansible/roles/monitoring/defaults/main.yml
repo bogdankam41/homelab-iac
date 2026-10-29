@@ -40,6 +40,21 @@ monitoring_pve_nodes: []
 pve_exporter_version: "3.10.1"
 pve_exporter_listen_address: "127.0.0.1:9221"
 
+# --- Network switches ---------------------------------------------------
+# SNMP devices. Each entry: { name, address, community, modules (optional
+# list, default ["system", "if_mib"]), labels (optional map) }. community is
+# SNMPv2c, read-only.
+# Empty list = snmp_exporter is not installed and the snmp job is not rendered.
+monitoring_snmp_targets: []
+snmp_exporter_version: "0.30.1"
+snmp_exporter_listen_address: "127.0.0.1:9116"
+# SKS3200-series switches without SNMP, read through their web UI's JSON API.
+# Each entry: { name, address, username, password, labels (optional map) }.
+monitoring_sks_switches: []
+sks_exporter_listen_address: "127.0.0.1:9117"
+# Switch CPUs are weak (an SNMP walk or a web login is noticeable on them).
+monitoring_switch_scrape_interval: "30s"
+
 # --- Federation from other Prometheus servers ---------------------------
 # Each entry: { job, address, match (optional list), labels (optional map) }.
 # Pulls a selected set of series from another Prometheus's /federate — e.g. the
@@ -84,6 +99,11 @@ alert_disk_for: "15m"
 alert_temp_threshold: 85
 alert_temp_for: "5m"
 alert_temp_chips: ".*coretemp.*|.*k10temp.*|.*cpu_thermal.*|.*nvme.*|.*drivetemp.*"
+# Switches: link changes per port in 15 min, bad packets per port in 15 min,
+# board temperature (a switch board runs much cooler than a CPU).
+alert_switch_flaps: 4
+alert_switch_errors: 100
+alert_switch_temp_threshold: 70
 
 # --- Grafana ------------------------------------------------------------
 grafana_listen_port: 3000

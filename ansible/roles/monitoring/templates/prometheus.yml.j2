@@ -96,6 +96,54 @@ scrape_configs:
         replacement: {{ pve_exporter_listen_address }}
 {% endif %}
 
+{% if monitoring_snmp_targets %}
+  # Switches over SNMP through snmp_exporter. __param_* labels become URL
+  # parameters: the device's own community (auth) and the MIBs to walk (module).
+  - job_name: snmp
+    metrics_path: /snmp
+    scrape_interval: {{ monitoring_switch_scrape_interval }}
+    static_configs:
+{% for t in monitoring_snmp_targets %}
+      - targets: ["{{ t.address }}"]
+        labels:
+          name: "{{ t.name }}"
+          __param_auth: "{{ t.name }}"
+          __param_module: "{{ (t.get('modules') or ['system', 'if_mib']) | join(',') }}"
+{% for key, value in (t.get('labels') or {}) | dictsort %}
+          {{ key }}: "{{ value }}"
+{% endfor %}
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: {{ snmp_exporter_listen_address }}
+{% endif %}
+
+{% if monitoring_sks_switches %}
+  # SKS3200 switches (no SNMP) through sks_exporter and their web UI's JSON API.
+  - job_name: sks
+    scrape_interval: {{ monitoring_switch_scrape_interval }}
+    static_configs:
+{% for s in monitoring_sks_switches %}
+      - targets: ["{{ s.address }}"]
+        labels:
+          name: "{{ s.name }}"
+{% for key, value in (s.get('labels') or {}) | dictsort %}
+          {{ key }}: "{{ value }}"
+{% endfor %}
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: {{ sks_exporter_listen_address }}
+{% endif %}
+
   # Federation: a selected set of series from another Prometheus. honor_labels
   # keeps the source's job/instance/namespace labels; the entry's labels (e.g.
   # cluster) are added on top, so the series do not mix with local ones.

@@ -289,6 +289,56 @@ variable "blackbox_exporter_version" {
   default     = "0.28.0"
 }
 
+variable "monitoring_snmp_targets" {
+  description = <<-EOT
+    Switches scraped over SNMP (v2c, read-only) through snmp_exporter:
+
+      { name = "core-switch", address = "192.168.1.3", community = "…", modules = ["system", "if_mib", "dcn_switch"] }
+
+    modules are snmp_exporter modules walked in one scrape; default
+    ["system", "if_mib"] (uptime and name; per-port traffic, errors, link state).
+    labels are optional extras.
+    Empty = no exporter, no snmp scrape job.
+  EOT
+
+  type = list(object({
+    name      = string
+    address   = string
+    community = string
+    modules   = optional(list(string))
+    labels    = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
+variable "monitoring_sks_switches" {
+  description = <<-EOT
+    SKS3200-series switches, which have no SNMP: read through their web UI's
+    JSON API by sks_exporter (temperature, port link/speed, packet counters, LAG).
+
+      { name = "poe-switch", address = "192.168.1.4", username = "admin", password = "…" }
+
+    Empty = no exporter, no sks scrape job.
+  EOT
+
+  type = list(object({
+    name     = string
+    address  = string
+    username = string
+    password = string
+    labels   = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
+variable "snmp_exporter_version" {
+  type        = string
+  description = "snmp_exporter release to install (without the leading v)."
+  default     = "0.30.1"
+}
+
 variable "pve_exporter_version" {
   type        = string
   description = "prometheus-pve-exporter release to install from PyPI."

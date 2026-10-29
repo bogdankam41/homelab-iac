@@ -27,6 +27,8 @@ locals {
       monitoring_secure_targets = var.monitoring_secure_targets
       monitoring_pve_nodes      = var.monitoring_pve_nodes
       monitoring_federation     = var.monitoring_federation
+      monitoring_snmp_targets   = var.monitoring_snmp_targets
+      monitoring_sks_switches   = var.monitoring_sks_switches
       monitoring_default_job    = var.default_scrape_job
       monitoring_self_name      = var.vm_name
       monitoring_self_labels    = var.self_labels
@@ -40,6 +42,7 @@ locals {
       node_exporter_version           = var.node_exporter_version
       blackbox_exporter_version       = var.blackbox_exporter_version
       pve_exporter_version            = var.pve_exporter_version
+      snmp_exporter_version           = var.snmp_exporter_version
       monitoring_alerts_enabled       = var.alerts_enabled
       alertmanager_telegram_bot_token = var.telegram_bot_token
       alertmanager_telegram_chat_id   = var.telegram_chat_id

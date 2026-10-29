@@ -79,6 +79,39 @@ monitoring_pve_nodes = [
   },
 ]
 
+# ---------------------------------------------------------------------------
+# Network switches. Managed switches with SNMP go through snmp_exporter; enable
+# read-only SNMPv2c on the switch and allow only the monitoring VM, e.g.:
+#
+#   snmp-server enable
+#   snmp-server community ro 0 <random string>
+#   snmp-server securityip enable
+#   snmp-server securityip 192.168.1.40
+#
+# modules: system (uptime, name) + if_mib (ports: traffic, errors, link) + dcn_switch (CPU/RAM of the
+# RTL8390 L3 switch, enterprise 63563). Default is ["system", "if_mib"].
+# ---------------------------------------------------------------------------
+monitoring_snmp_targets = [
+  {
+    name      = "core-switch"
+    address   = "192.168.1.3"
+    community = "REPLACE_WITH_COMMUNITY"
+    modules   = ["system", "if_mib", "dcn_switch"]
+    labels    = { role = "switch", site = "home" }
+  },
+]
+
+# SKS3200-series switches have no SNMP; sks_exporter logs into the web UI.
+monitoring_sks_switches = [
+  {
+    name     = "poe-switch"
+    address  = "192.168.1.4"
+    username = "admin"
+    password = "REPLACE_WITH_PASSWORD"
+    labels   = { role = "switch", site = "home" }
+  },
+]
+
 # Dashboards pulled from grafana.com into the "Homelab" folder.
 # gnet_id / revision are the numbers from https://grafana.com/grafana/dashboards/<id>.
 grafana_dashboards = [

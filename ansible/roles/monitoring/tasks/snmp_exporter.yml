@@ -1,0 +1,88 @@
+---
+# snmp_exporter for managed switches. One instance serves every device:
+# Prometheus passes it as ?target=, the community as ?auth= (one auth per
+# device in homelab.yml) and the MIBs to walk as ?module=.
+- name: Create the snmp_exporter config directory
+  ansible.builtin.file:
+    path: /etc/snmp_exporter
+    state: directory
+    owner: root
+    group: prometheus
+    mode: '0750'
+
+- name: Check the installed snmp_exporter version
+  ansible.builtin.command: /usr/local/bin/snmp_exporter --version
+  register: snmp_exporter_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install snmp_exporter {{ snmp_exporter_version }}
+  when: snmp_exporter_version not in (snmp_exporter_installed.stdout | default('') ~ snmp_exporter_installed.stderr | default(''))
+  vars:
+    snmp_name: "snmp_exporter-{{ snmp_exporter_version }}.linux-amd64"
+    snmp_base: "https://github.com/prometheus/snmp_exporter/releases/download/v{{ snmp_exporter_version }}"
+  block:
+    # get_url checks the archive against the release's sha256sums.txt.
+    - name: Download the snmp_exporter release
+      ansible.builtin.get_url:
+        url: "{{ snmp_base }}/{{ snmp_name }}.tar.gz"
+        dest: "/opt/{{ snmp_name }}.tar.gz"
+        checksum: "sha256:{{ snmp_base }}/sha256sums.txt"
+        mode: '0644'
+      register: snmp_exporter_download
+      until: snmp_exporter_download is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Unpack the snmp_exporter release
+      ansible.builtin.unarchive:
+        src: "/opt/{{ snmp_name }}.tar.gz"
+        dest: /opt/
+        remote_src: true
+
+    - name: Put the snmp_exporter binary in place
+      ansible.builtin.copy:
+        src: "/opt/{{ snmp_name }}/snmp_exporter"
+        dest: /usr/local/bin/snmp_exporter
+        remote_src: true
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Restart snmp_exporter
+
+    # The release's generated config: if_mib and the other stock modules.
+    - name: Put the stock snmp.yml in place
+      ansible.builtin.copy:
+        src: "/opt/{{ snmp_name }}/snmp.yml"
+        dest: /etc/snmp_exporter/snmp.yml
+        remote_src: true
+        owner: root
+        group: prometheus
+        mode: '0644'
+      notify: Restart snmp_exporter
+
+# Communities plus the hand-written vendor module, next to the stock file —
+# snmp_exporter merges every --config.file it is given.
+- name: Deploy homelab.yml
+  ansible.builtin.template:
+    src: snmp_homelab.yml.j2
+    dest: /etc/snmp_exporter/homelab.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  no_log: true
+  notify: Restart snmp_exporter
+
+- name: Install the snmp_exporter systemd unit
+  ansible.builtin.template:
+    src: snmp_exporter.service.j2
+    dest: /etc/systemd/system/snmp_exporter.service
+    mode: '0644'
+  notify: Restart snmp_exporter
+
+- name: Ensure snmp_exporter is started and enabled
+  ansible.builtin.systemd:
+    name: snmp_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

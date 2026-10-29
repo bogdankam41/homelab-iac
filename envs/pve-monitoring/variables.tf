@@ -175,3 +175,29 @@ variable "monitoring_secure_targets" {
   default   = []
   sensitive = true
 }
+
+variable "monitoring_snmp_targets" {
+  description = "Switches scraped over SNMP (see modules/monitoring_vm). Communities live in terraform.tfvars."
+  type = list(object({
+    name      = string
+    address   = string
+    community = string
+    modules   = optional(list(string))
+    labels    = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}
+
+variable "monitoring_sks_switches" {
+  description = "SKS3200 switches read through their web UI (see modules/monitoring_vm). Passwords live in terraform.tfvars."
+  type = list(object({
+    name     = string
+    address  = string
+    username = string
+    password = string
+    labels   = optional(map(string))
+  }))
+  default   = []
+  sensitive = true
+}

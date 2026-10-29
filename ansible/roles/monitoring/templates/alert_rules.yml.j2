@@ -99,4 +99,52 @@ groups:
           description: '{{ $labels.id }} is {{ printf "%.0f" $value }}% full on {{ $labels.instance }}.'{% endraw %}
 
 {% endif %}
+{% if monitoring_snmp_targets or monitoring_sks_switches %}
+
+  # Switches: job snmp (IF-MIB, ifName = port) and job sks (port = port number).
+  # A switch that stops answering is already InstanceDown (up == 0).
+  - name: homelab.switches
+    rules:
+      # A port that keeps going up and down: bad cable/transceiver or a looping device.
+      - alert: SwitchPortFlapping
+        expr: |
+          label_replace(changes(ifOperStatus{job="snmp"}[15m]), "port", "$1", "ifName", "(.+)") > {{ alert_switch_flaps }}
+            or changes(sks_port_up{job="sks"}[15m]) > {{ alert_switch_flaps }}
+        labels:
+          severity: warning
+        annotations:{% raw %}
+          summary: 'Port {{ $labels.port }} on {{ $labels.name }} is flapping'
+          description: 'The link changed state {{ printf "%.0f" $value }} times in 15 minutes.'{% endraw %}
+
+      - alert: SwitchPortErrors
+        expr: |
+          label_replace(increase(ifInErrors{job="snmp"}[15m]) + increase(ifOutErrors{job="snmp"}[15m]), "port", "$1", "ifName", "(.+)") > {{ alert_switch_errors }}
+            or increase(sks_port_rx_errors_total{job="sks"}[15m]) + increase(sks_port_tx_errors_total{job="sks"}[15m]) > {{ alert_switch_errors }}
+        labels:
+          severity: warning
+          threshold: "{{ alert_switch_errors }}"
+        annotations:{% raw %}
+          summary: 'Errors on port {{ $labels.port }} of {{ $labels.name }}'
+          description: '{{ printf "%.0f" $value }} bad packets in 15 minutes - check the cable or transceiver.'{% endraw %}
+
+      - alert: SwitchHighCpu
+        expr: switchCpuBusy5m > {{ alert_cpu_threshold }}
+        for: {{ alert_cpu_for }}
+        labels:
+          severity: warning
+          threshold: "{{ alert_cpu_threshold }}"
+        annotations:{% raw %}
+          summary: 'High CPU on {{ $labels.name }}'
+          description: 'Switch CPU is {{ printf "%.0f" $value }}% busy over 5 minutes.'{% endraw %}
+
+      - alert: SwitchHighTemperature
+        expr: sks_temperature_celsius > {{ alert_switch_temp_threshold }}
+        for: {{ alert_temp_for }}
+        labels:
+          severity: warning
+          threshold: "{{ alert_switch_temp_threshold }}"
+        annotations:{% raw %}
+          summary: 'High temperature on {{ $labels.name }}'
+          description: 'Switch board is at {{ printf "%.0f" $value }}°C.'{% endraw %}
+{% endif %}
 {% endif %}

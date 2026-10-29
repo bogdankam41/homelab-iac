@@ -1,0 +1,18 @@
+# Managed by Ansible (roles/monitoring) — do not edit by hand.
+[Unit]
+Description=Prometheus SNMP exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/snmp_exporter \
+  --config.file=/etc/snmp_exporter/snmp.yml \
+  --config.file=/etc/snmp_exporter/homelab.yml \
+  --web.listen-address={{ snmp_exporter_listen_address }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
