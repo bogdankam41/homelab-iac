@@ -100,6 +100,17 @@ alert_cpu_threshold: 90
 alert_cpu_for: "10m"
 alert_memory_threshold: 90
 alert_memory_for: "10m"
+# Hypervisors (targets with this `role` label) are left out of HighMemoryUsage:
+# VMs with fixed RAM keep the node near 90% for good, which is the allocation
+# ratio, not a shortage. They alert on what does hurt instead: memory about to
+# run out (the OOM killer picks a VM) and processes stalling on memory (PSI).
+alert_hypervisor_role: hypervisor
+alert_hypervisor_memory_threshold: 97
+alert_hypervisor_memory_for: "5m"
+# Percent of wall time some task waits for memory (PSI "some"); ~1% is a busy
+# but healthy node, sustained 10% means guests are being squeezed or swapped.
+alert_memory_pressure_threshold: 10
+alert_memory_pressure_for: "10m"
 alert_disk_threshold: 85
 alert_disk_for: "15m"
 # Temperature (node_exporter hwmon collector). Only the chips worth alerting on:

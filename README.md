@@ -367,7 +367,7 @@ ansible-playbook -i '192.168.1.1,' -u root \
 
 ### 🔔 Алерты
 
-Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)), а при заданных `monitoring_pve_nodes` — `GuestDown` и `PveStorageFull` (см. [🖥️ Proxmox и гости](#️-proxmox-и-гости)), при заданных коммутаторах — `SwitchPortFlapping`, `SwitchPortErrors`, `SwitchHighCpu`, `SwitchHighTemperature` (см. [🔌 Коммутаторы](#-коммутаторы)), при заданных регистраторах — `CameraOffline`, `CameraNotRecording`, `DvrRecordingStalled`, `DvrDiskProblem`, `DvrArchiveShort` (см. [📹 Видеорегистратор](#-видеорегистратор)). Пороги правятся из tfvars:
+Встроенные правила: `InstanceDown` (цель не отвечает 5 мин), `HighCpuUsage`, `HighMemoryUsage`, `HypervisorMemoryFull`, `HypervisorMemoryPressure`, `LowDiskSpace`, `HighTemperature` (см. [🌡️ Температура](#️-температура)), а при заданных `monitoring_pve_nodes` — `GuestDown` и `PveStorageFull` (см. [🖥️ Proxmox и гости](#️-proxmox-и-гости)), при заданных коммутаторах — `SwitchPortFlapping`, `SwitchPortErrors`, `SwitchHighCpu`, `SwitchHighTemperature` (см. [🔌 Коммутаторы](#-коммутаторы)), при заданных регистраторах — `CameraOffline`, `CameraNotRecording`, `DvrRecordingStalled`, `DvrDiskProblem`, `DvrArchiveShort` (см. [📹 Видеорегистратор](#-видеорегистратор)). Пороги правятся из tfvars:
 
 ```hcl
 alert_thresholds = {
@@ -376,6 +376,8 @@ alert_thresholds = {
   alert_temp_threshold = "90"   # по умолчанию 85 °C
 }
 ```
+
+**Память гипервизоров.** Цели с `role = "hypervisor"` в `HighMemoryUsage` не входят: ВМ с фиксированной RAM держат ноду у 90% постоянно — это доля выделенной гостям памяти, а не нехватка. Для них два своих правила: `HypervisorMemoryFull` (critical, занято больше `alert_hypervisor_memory_threshold`, 97%, дольше 5 мин — вот-вот придёт OOM killer и убьёт ВМ) и `HypervisorMemoryPressure` (задачи ждут память больше `alert_memory_pressure_threshold`, 10% времени, по PSI дольше 10 мин — гостей уже ужимает ballooning или выталкивает в своп). Здоровая нагруженная нода держит PSI около 1%. Метку роли меняет `alert_hypervisor_role`.
 
 Доставка — Telegram; пока `telegram_bot_token` пустой, алерты считаются и видны в UI, но никуда не уходят:
 
@@ -601,6 +603,7 @@ tofu apply
 - `192.168.1.40` должен быть свободен и вне DHCP-пула.
 - Cloud-image (`noble-server-cloudimg-amd64.img`) уже качает `envs/pve-k3s`, поэтому здесь стоит `download_image = false` — окружение просто использует готовый файл. Если разворачивать мониторинг на ноде без k3s, поставить `true`.
 - `qemu_agent_enabled` — та же логика, что у k3s: на первом apply `false`, потом `true` + перезагрузка ВМ.
+- `memory_floating_mb` — нижняя граница ballooning: пока нода занята больше ~80%, Proxmox ужимает ВМ до этого значения и отдаёт освободившееся другим гостям; `0` — без balloon-устройства, ВМ всегда держит `memory_mb`. Как и агент, применяется только после перезапуска ВМ со стороны Proxmox (`qm reboot 210`); `reboot` изнутри гостя не хватит.
 - **Grafana Labs отдаёт 403 на российские IP** (`apt.grafana.com`, `dl.grafana.com`). Если ВМ ходит в интернет напрямую, задача `Fetch the Grafana apt signing key` падает с `HTTP Error 403: Access Denied` — ВМ нужен другой путь до этих хостов — прокси или зеркало (весь остальной стек ставится с GitHub и не затронут).
 - Версии компонентов пришпилены переменными модуля (`prometheus_version`, `alertmanager_version`, `node_exporter_version`, `grafana_version`). Бинарь переустанавливается, только если версия на диске реально отличается.
 - Ретеншн метрик — `prometheus_retention_time` (по умолчанию 30 дней); увеличивая его, увеличивайте и `disk_size`.

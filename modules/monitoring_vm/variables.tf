@@ -78,6 +78,12 @@ variable "memory_mb" {
   default     = 2048
 }
 
+variable "memory_floating_mb" {
+  type        = number
+  description = "Ballooning floor in MiB: while the node is above ~80% RAM, Proxmox squeezes the VM down to this. 0 = no balloon device, the VM always holds memory_mb. Changing it needs a VM stop/start."
+  default     = 0
+}
+
 variable "disk_size" {
   type        = number
   description = "Root disk size in GiB. Holds the Prometheus TSDB, so size it together with prometheus_retention_time."

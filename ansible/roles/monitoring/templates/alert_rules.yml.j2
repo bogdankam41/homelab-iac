@@ -29,7 +29,7 @@ groups:
           description: 'CPU usage is {{ printf "%.0f" $value }}% on {{ $labels.instance }}.'{% endraw %}
 
       - alert: HighMemoryUsage
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > {{ alert_memory_threshold }}
+        expr: (1 - (node_memory_MemAvailable_bytes{role!="{{ alert_hypervisor_role }}"} / node_memory_MemTotal_bytes)) * 100 > {{ alert_memory_threshold }}
         for: {{ alert_memory_for }}
         labels:
           severity: warning
@@ -37,6 +37,26 @@ groups:
         annotations:{% raw %}
           summary: 'High memory usage on {{ $labels.name }}'
           description: 'Memory usage is {{ printf "%.0f" $value }}% on {{ $labels.instance }}.'{% endraw %}
+
+      - alert: HypervisorMemoryFull
+        expr: (1 - (node_memory_MemAvailable_bytes{role="{{ alert_hypervisor_role }}"} / node_memory_MemTotal_bytes)) * 100 > {{ alert_hypervisor_memory_threshold }}
+        for: {{ alert_hypervisor_memory_for }}
+        labels:
+          severity: critical
+          threshold: "{{ alert_hypervisor_memory_threshold }}"
+        annotations:{% raw %}
+          summary: 'Hypervisor {{ $labels.name }} is out of memory'
+          description: 'Memory usage is {{ printf "%.0f" $value }}% on {{ $labels.instance }}; the OOM killer may stop a VM.'{% endraw %}
+
+      - alert: HypervisorMemoryPressure
+        expr: rate(node_pressure_memory_waiting_seconds_total{role="{{ alert_hypervisor_role }}"}[5m]) * 100 > {{ alert_memory_pressure_threshold }}
+        for: {{ alert_memory_pressure_for }}
+        labels:
+          severity: warning
+          threshold: "{{ alert_memory_pressure_threshold }}"
+        annotations:{% raw %}
+          summary: 'Memory pressure on hypervisor {{ $labels.name }}'
+          description: 'Tasks wait for memory {{ printf "%.0f" $value }}% of the time on {{ $labels.instance }} (PSI): guests are being squeezed or swapped.'{% endraw %}
 
       - alert: LowDiskSpace
         expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|squashfs|overlay|ramfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|squashfs|overlay|ramfs"})) * 100 > {{ alert_disk_threshold }}

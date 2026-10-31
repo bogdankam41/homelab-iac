@@ -97,6 +97,7 @@ resource "proxmox_virtual_environment_vm" "monitoring" {
 
   memory {
     dedicated = var.memory_mb
+    floating  = var.memory_floating_mb
   }
 
   disk {

@@ -17,7 +17,13 @@ module "monitoring" {
   dns_servers = ["192.168.1.2"]
 
   cpu_cores = 2
-  memory_mb = 3072
+  # Peak in-guest use is ~1.4 GiB (Prometheus ~400 MiB at ~40k series); the
+  # rest of 3 GiB was guest page cache pinned on the host. The node runs above
+  # 80% RAM, so auto-ballooning keeps the VM near the floor most of the time.
+  memory_mb          = 2048
+  memory_floating_mb = 1792
+  # Ansible has installed qemu-guest-agent; the channel appears after a stop/start.
+  qemu_agent_enabled = true
   # TSDB lives on this disk — keep it in step with prometheus_retention_time.
   disk_size = 32
 
