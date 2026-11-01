@@ -1,4 +1,11 @@
 ---
+- name: Create the blackbox_exporter system user
+  ansible.builtin.user:
+    name: "{{ blackbox_exporter_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
 - name: Check the installed blackbox_exporter version
   ansible.builtin.command: /usr/local/bin/blackbox_exporter --version
   register: blackbox_installed
@@ -44,7 +51,7 @@
     path: /etc/blackbox_exporter
     state: directory
     owner: root
-    group: prometheus
+    group: "{{ blackbox_exporter_user }}"
     mode: '0755'
 
 - name: Deploy blackbox.yml
@@ -52,7 +59,7 @@
     src: blackbox.yml.j2
     dest: /etc/blackbox_exporter/blackbox.yml
     owner: root
-    group: prometheus
+    group: "{{ blackbox_exporter_user }}"
     mode: '0644'
     validate: /usr/local/bin/blackbox_exporter --config.check --config.file=%s
   notify: Reload blackbox_exporter

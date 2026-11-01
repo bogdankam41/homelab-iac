@@ -1,7 +1,7 @@
-# Managed by Ansible (roles/monitoring) — do not edit by hand.
+# Managed by Ansible (roles/blackbox_exporter) — do not edit by hand.
 modules:
   # Any 2xx (generate_204 included), following redirects; IPv4 only - the
-  # monitoring VM has no global IPv6.
+  # monitoring VM (and the LANs it probes from) have no global IPv6.
   http_2xx:
     prober: http
     timeout: 10s

@@ -1,12 +1,12 @@
-# Managed by Ansible (roles/monitoring) — do not edit by hand.
+# Managed by Ansible (roles/blackbox_exporter) — do not edit by hand.
 [Unit]
 Description=Prometheus blackbox_exporter
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=prometheus
-Group=prometheus
+User={{ blackbox_exporter_user }}
+Group={{ blackbox_exporter_user }}
 ExecStart=/usr/local/bin/blackbox_exporter \
   --config.file=/etc/blackbox_exporter/blackbox.yml \
   --web.listen-address={{ blackbox_listen_address }}

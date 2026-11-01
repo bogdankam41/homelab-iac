@@ -1,0 +1,8 @@
+---
+# Prometheus blackbox_exporter - HTTP/TCP probes on behalf of Prometheus.
+# Installed on the monitoring VM itself and reusable on any other host via
+# ansible/blackbox_exporter.yml, so probes can run from another network.
+blackbox_exporter_version: "0.28.0"
+# Loopback on the monitoring VM: only the local Prometheus talks to it.
+blackbox_listen_address: "127.0.0.1:9115"
+blackbox_exporter_user: blackbox_exporter

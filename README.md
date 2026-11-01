@@ -88,6 +88,8 @@ proxmox/
 │   ├── roles/node_exporter/       # node_exporter + systemd-юнит
 │   ├── keenetic_node_exporter.yml # то же для роутеров Keenetic (Entware)
 │   ├── roles/keenetic_node_exporter/  # пакет Entware + свой init-скрипт, только raw
+│   ├── blackbox_exporter.yml      # blackbox на хосте в другой сети — пробы оттуда (monitoring_probes[].prober)
+│   ├── roles/blackbox_exporter/   # blackbox_exporter + systemd-юнит (стоит и на VM мониторинга)
 │   ├── pve_node.yml               # настройка самих нод Proxmox (крышка ноутбука, сон)
 │   ├── roles/pve_node/            # logind drop-in + маскировка sleep-таргетов
 │   └── inventory/                 # (gitignored) inventory генерирует Terraform

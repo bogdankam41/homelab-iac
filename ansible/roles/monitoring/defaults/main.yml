@@ -3,7 +3,6 @@
 # the role replaces a binary only when the version on disk differs.
 prometheus_version: "3.5.0"
 alertmanager_version: "0.28.1"
-blackbox_exporter_version: "0.28.0"
 # Empty = latest package from the Grafana apt repo; or pin e.g. "11.6.1".
 grafana_version: ""
 
@@ -27,10 +26,12 @@ monitoring_self_name: "{{ inventory_hostname }}"
 monitoring_self_labels: {}
 
 # --- Probes (blackbox_exporter) -----------------------------------------
-# Each entry: { name, target, module, job }. Modules: http_2xx, tcp_connect.
-# One scrape job per distinct `job`, so alerts can tell paths apart.
+# Each entry: { name, target, module, job, prober (optional), labels (optional map) }.
+# Modules: http_2xx, tcp_connect. One scrape job per distinct `job`, so alerts
+# can tell paths apart. prober is the host:port of a blackbox_exporter elsewhere
+# (ansible/blackbox_exporter.yml) to probe from another network; empty = the
+# local one. The exporter itself (version, listen address) is roles/blackbox_exporter.
 monitoring_probes: []
-blackbox_listen_address: "127.0.0.1:9115"
 
 # --- Proxmox VE (prometheus-pve-exporter) -------------------------------
 # Each entry: { name, address, token_id, token_secret, labels (optional map) }.

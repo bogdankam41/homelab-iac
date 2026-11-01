@@ -1,0 +1,12 @@
+---
+# Standalone: install blackbox_exporter on a host in another network, so the
+# monitoring VM can run probes from there (monitoring_probes[].prober).
+# It listens on the host's main IPv4 address, not on every interface, e.g.
+#   ansible-playbook -i '192.168.2.2,' -u root --private-key ~/.ssh/key -b ansible/blackbox_exporter.yml
+- name: Install blackbox_exporter on remote probe hosts
+  hosts: all
+  become: true
+  vars:
+    blackbox_listen_address: "{{ ansible_facts.default_ipv4.address }}:9115"
+  roles:
+    - blackbox_exporter

@@ -134,6 +134,8 @@ variable "monitoring_probes" {
     target = string
     module = string
     job    = string
+    prober = optional(string)
+    labels = optional(map(string))
   }))
   default = []
 }

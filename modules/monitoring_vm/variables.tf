@@ -176,9 +176,14 @@ variable "monitoring_probes" {
 
       { name = "google", target = "https://www.google.com/generate_204", module = "http_2xx", job = "web" }
       { name = "nas-ssh", target = "192.168.1.50:22", module = "tcp_connect", job = "lan_tcp" }
+      { name = "google", target = "https://www.google.com/generate_204", module = "http_2xx", job = "web",
+        prober = "192.168.2.2:9115", labels = { site = "pve-2" } }
 
     module: http_2xx or tcp_connect. job groups probes into scrape jobs, so
-    alert rules can tell the groups apart.
+    alert rules can tell the groups apart. prober (optional) is a
+    blackbox_exporter in another network (ansible/blackbox_exporter.yml) that
+    runs the probe instead of the local one; labels (optional) are extra
+    labels, e.g. the site the probe runs from.
   EOT
 
   type = list(object({
@@ -186,6 +191,8 @@ variable "monitoring_probes" {
     target = string
     module = string
     job    = string
+    prober = optional(string)
+    labels = optional(map(string))
   }))
   default = []
 }

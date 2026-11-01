@@ -62,9 +62,12 @@
     shell: /usr/sbin/nologin
     create_home: false
 
-# Before Prometheus, so its probe jobs have something to talk to.
+# Before Prometheus, so its probe jobs have something to talk to. public:
+# Prometheus' scrape config needs blackbox_listen_address from its defaults.
 - name: Install and configure blackbox_exporter
-  ansible.builtin.include_tasks: blackbox.yml
+  ansible.builtin.include_role:
+    name: blackbox_exporter
+    public: true
 
 - name: Install and configure pve_exporter
   ansible.builtin.include_tasks: pve_exporter.yml

@@ -14,6 +14,7 @@ locals {
     [for f in fileset(local.ansible_dir, "monitoring.yml") : f],
     [for f in fileset(local.ansible_dir, "roles/monitoring/**") : f],
     [for f in fileset(local.ansible_dir, "roles/node_exporter/**") : f],
+    [for f in fileset(local.ansible_dir, "roles/blackbox_exporter/**") : f],
   ))
   ansible_fingerprint = sha256(join("", [for f in local.ansible_files : filesha256("${local.ansible_dir}/${f}")]))
 
