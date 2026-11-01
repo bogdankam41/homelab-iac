@@ -196,10 +196,14 @@ scrape_configs:
 {% endfor %}
 
   # Exporters reachable only over TLS + basic auth. The CA (self-signed cert)
-  # and the password sit in files next to this config, not inline.
+  # and the password sit in files next to this config, not inline. proxy_url
+  # sends the scrape through an HTTP proxy (CONNECT); TLS stays end to end.
 {% for t in monitoring_secure_targets %}
   - job_name: {{ t.job }}
     scheme: https
+{% if t.get('proxy_url') %}
+    proxy_url: {{ t.proxy_url }}
+{% endif %}
     tls_config:
       ca_file: /etc/prometheus/secrets/{{ t.job }}.crt
     basic_auth:

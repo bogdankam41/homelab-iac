@@ -200,16 +200,19 @@ variable "monitoring_probes" {
 variable "monitoring_secure_targets" {
   description = <<-EOT
     Exporters reachable only over TLS + basic auth (e.g. a host outside the LAN).
-    ca_cert is the PEM of the exporter's self-signed certificate.
+    ca_cert is the PEM of the exporter's self-signed certificate. proxy_url
+    (optional, e.g. "http://192.168.1.1:10809") sends the scrape through an
+    HTTP proxy; TLS and basic auth stay end to end.
   EOT
 
   type = list(object({
-    name     = string
-    address  = string
-    job      = string
-    ca_cert  = string
-    username = string
-    password = string
+    name      = string
+    address   = string
+    job       = string
+    ca_cert   = string
+    username  = string
+    password  = string
+    proxy_url = optional(string)
   }))
   default   = []
   sensitive = true

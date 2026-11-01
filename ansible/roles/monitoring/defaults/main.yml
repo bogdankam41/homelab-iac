@@ -84,7 +84,8 @@ monitoring_federation_match:
   - '{__name__="cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile"}'
 
 # --- Targets behind TLS + basic auth (e.g. a host outside the LAN) -------
-# Each entry: { name, address, job, ca_cert (PEM), username, password }.
+# Each entry: { name, address, job, ca_cert (PEM), username, password,
+# proxy_url (optional HTTP proxy the scrape goes through) }.
 monitoring_secure_targets: []
 
 # --- Alerting -----------------------------------------------------------

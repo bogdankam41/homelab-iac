@@ -167,12 +167,13 @@ variable "monitoring_federation" {
 variable "monitoring_secure_targets" {
   description = "TLS + basic-auth exporters (see modules/monitoring_vm). Password lives in terraform.tfvars."
   type = list(object({
-    name     = string
-    address  = string
-    job      = string
-    ca_cert  = string
-    username = string
-    password = string
+    name      = string
+    address   = string
+    job       = string
+    ca_cert   = string
+    username  = string
+    password  = string
+    proxy_url = optional(string)
   }))
   default   = []
   sensitive = true
