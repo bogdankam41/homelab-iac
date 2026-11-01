@@ -6,7 +6,7 @@
 
 ENABLED=yes
 PROCS=node_exporter
-ARGS='--web.listen-address={{ keenetic_node_exporter_listen_address }} --collector.disable-defaults{% for c in keenetic_node_exporter_collectors %} --collector.{{ c }}{% endfor %} --collector.netdev.device-exclude={{ keenetic_node_exporter_netdev_exclude }} --collector.netclass.ignored-devices={{ keenetic_node_exporter_netdev_exclude }} --collector.filesystem.mount-points-exclude={{ keenetic_node_exporter_mount_exclude }}{{ ([''] + keenetic_node_exporter_extra_args) | join(' ') }}'
+ARGS='--web.listen-address={{ keenetic_node_exporter_listen_address }} --collector.disable-defaults{% for c in keenetic_node_exporter_collectors %} --collector.{{ c }}{% endfor %} --collector.netdev.device-exclude={{ keenetic_node_exporter_netdev_exclude }} --collector.netclass.ignored-devices={{ keenetic_node_exporter_netdev_exclude }} --collector.filesystem.mount-points-exclude={{ keenetic_node_exporter_mount_exclude }}{% if keenetic_node_exporter_textfile_dir %} --collector.textfile --collector.textfile.directory={{ keenetic_node_exporter_textfile_dir }}{% endif %}{{ ([''] + keenetic_node_exporter_extra_args) | join(' ') }}'
 # Started from an SSH session, the exporter would die with it — nohup keeps it.
 PREARGS=nohup
 DESC=$PROCS

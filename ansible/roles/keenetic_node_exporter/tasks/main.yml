@@ -9,6 +9,12 @@
   register: keenetic_ne_pkg
   changed_when: "'changed' in keenetic_ne_pkg.stdout"
 
+- name: Create the textfile collector directory
+  when: keenetic_node_exporter_textfile_dir | length > 0
+  ansible.builtin.raw: "[ -d {{ keenetic_node_exporter_textfile_dir }} ] || { mkdir -p {{ keenetic_node_exporter_textfile_dir }} && echo changed; }"
+  register: keenetic_ne_textfile
+  changed_when: "'changed' in keenetic_ne_textfile.stdout"
+
 # The rendered script goes through a temp file, so a router whose script is
 # already right is left alone.
 - name: Install the init script

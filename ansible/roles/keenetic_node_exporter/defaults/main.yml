@@ -30,5 +30,9 @@ keenetic_node_exporter_netdev_exclude: "^(lo|tunl0|ip6tnl0|sit0|gre0|gretap0|eth
 # or every disk alert fires twice.
 keenetic_node_exporter_mount_exclude: "^/(dev|proc|sys|tmp/mnt)($|/)"
 
+# Directory for *.prom files written by scripts on the router (cron jobs that
+# export what node_exporter cannot see itself). Empty = no textfile collector.
+keenetic_node_exporter_textfile_dir: /opt/var/lib/node_exporter/textfile
+
 # More flags. The init script expands them unquoted: no spaces, no * ? [ ].
 keenetic_node_exporter_extra_args: []
