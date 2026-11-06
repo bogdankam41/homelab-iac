@@ -32,6 +32,9 @@ monitoring_self_labels: {}
 # (ansible/blackbox_exporter.yml) to probe from another network; empty = the
 # local one. The exporter itself (version, listen address) is roles/blackbox_exporter.
 monitoring_probes: []
+# Scrape interval per probe job ({ job: "4m" }); unlisted jobs use
+# prometheus_scrape_interval. Stay under 5m (Prometheus lookback window).
+monitoring_probe_job_intervals: {}
 
 # --- Proxmox VE (prometheus-pve-exporter) -------------------------------
 # Each entry: { name, address, token_id, token_secret, labels (optional map) }.

@@ -140,6 +140,12 @@ variable "monitoring_probes" {
   default = []
 }
 
+variable "monitoring_probe_job_intervals" {
+  description = "Scrape interval per probe job (see modules/monitoring_vm). Data lives in terraform.tfvars."
+  type        = map(string)
+  default     = {}
+}
+
 variable "monitoring_pve_nodes" {
   description = "Proxmox nodes scraped through pve_exporter (see modules/monitoring_vm). Token secrets live in terraform.tfvars."
   type = list(object({

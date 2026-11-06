@@ -37,8 +37,9 @@ module "monitoring" {
   # Devices to scrape — the list to edit when something new appears on the LAN.
   monitoring_targets = var.monitoring_targets
   # Blackbox probes and TLS-protected exporters outside the LAN.
-  monitoring_probes         = var.monitoring_probes
-  monitoring_secure_targets = var.monitoring_secure_targets
+  monitoring_probes              = var.monitoring_probes
+  monitoring_probe_job_intervals = var.monitoring_probe_job_intervals
+  monitoring_secure_targets      = var.monitoring_secure_targets
   # Both Proxmox nodes and all their guests, via the Proxmox API.
   monitoring_pve_nodes = var.monitoring_pve_nodes
   # Network switches: SNMP where the switch has it, the web UI's API where not.

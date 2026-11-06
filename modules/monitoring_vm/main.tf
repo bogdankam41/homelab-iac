@@ -22,8 +22,9 @@ locals {
   # filled in by the role, so tfvars entries can stay short.
   ansible_extra_vars = merge(
     {
-      monitoring_targets = var.monitoring_targets
-      monitoring_probes  = var.monitoring_probes
+      monitoring_targets             = var.monitoring_targets
+      monitoring_probes              = var.monitoring_probes
+      monitoring_probe_job_intervals = var.monitoring_probe_job_intervals
 
       monitoring_secure_targets = var.monitoring_secure_targets
       monitoring_pve_nodes      = var.monitoring_pve_nodes

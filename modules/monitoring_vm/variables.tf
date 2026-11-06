@@ -197,6 +197,16 @@ variable "monitoring_probes" {
   default = []
 }
 
+variable "monitoring_probe_job_intervals" {
+  description = <<-EOT
+    Scrape interval per probe job, e.g. { lan_tcp = "4m" }. Jobs not listed use
+    scrape_interval. Keep it under 5m: a longer gap drops the series out of
+    Prometheus' lookback window between probes and breaks `for:` in alerts.
+  EOT
+  type        = map(string)
+  default     = {}
+}
+
 variable "monitoring_secure_targets" {
   description = <<-EOT
     Exporters reachable only over TLS + basic auth (e.g. a host outside the LAN).

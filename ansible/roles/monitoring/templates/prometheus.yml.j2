@@ -54,6 +54,9 @@ scrape_configs:
 {% for job in monitoring_probes | map(attribute='job') | unique | sort %}
   - job_name: {{ job }}
     metrics_path: /probe
+{% if job in monitoring_probe_job_intervals %}
+    scrape_interval: {{ monitoring_probe_job_intervals[job] }}
+{% endif %}
     static_configs:
 {% for p in monitoring_probes | selectattr('job', 'equalto', job) %}
       - targets: ["{{ p.target }}"]
